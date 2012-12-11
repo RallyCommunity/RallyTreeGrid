@@ -7,12 +7,125 @@
 
     <script type="text/javascript">
         Rally.onReady(function() {
+            (function(global) {
+            
+              console.log("Is Rally.data.ModleFactory defined?", typeof Rally.data.ModelFactory);
+            
+              Ext.define('Rally.data.TreeModelFactory', {
+                requires: ['Ext.data.NodeInterface', 'Rally.data.ModelFactory'],
+            
+                singleton: true,
+            
+                getModel: function getModel(options) {
+                  var me = this,
+                      cb = options.success || function noop() {}
+            
+                  options.success = function onTreeModelSuccess(model) {
+                    var treeModel = me.createTreeModel(model);
+                    cb(treeModel);
+                  };
+            
+                  //debugger;
+            
+                  Rally.data.ModelFactory.getModel(options);
+            
+                },
+            
+                createTreeModel: function createTreeModel(baseModel, options) {
+                    var o = options || {},
+                        treeModel;
+            
+                    Ext.applyIf(o, {
+                      extend: baseModel,
+            
+                      statics: {
+                        getParentFieldNames: function getParentFieldNames() {
+                          var typeName = baseModel.typeName.toLowerCase();
+            
+                          if ({"task": 1, "testcase": 1}.hasOwnProperty(typeName)) {
+                            return ["WorkItem"];
+                          } else if ({"defect": 1}.hasOwnProperty(typeName)) {
+                            return ["Requirement"];
+                          } else if ({"testcasestep": 1}.hasOwnProperty(typeName)) {
+                            return ["TestCase"];
+                          } else if ({"hierarchicalrequirement": 1}.hasOwnProperty(typeName)) {
+                            return ["Parent", "PortfolioItem"];
+                          } else {
+                            return ["Parent"];
+                          }
+                        },
+            
+                        getChildFieldNames: function getChildFieldNames() {
+                          var typeName = baseModel.typeName.toLowerCase();
+            
+                          if (typeName === "hierarchicalrequirement") {
+                            return ["Tasks", "Children", "Defects", "TestCases"];
+                          } else if (typeName === "defectsuite") {
+                            return ["Defects", "Tasks"];
+                          } else if (typeName === "defect") {
+                            return ["Tasks"];
+                          } else if (typeName === "testcase") {
+                            return ["TestCaseSteps"]
+                          } else {
+                            return ["Children"];
+                          }
+                        }
+                      }
+                    });
+            
+                    treeModel = Ext.define(baseModel.modelName + ".TreeModel", o);
+            
+                    console.log("Base model");
+                    console.dir(baseModel);
+            
+                    Ext.data.NodeInterface.decorate(treeModel);
+            
+                    return treeModel;
+                }
+              });
+            
+            })(this);
             Ext.define('CustomApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
             
                 launch: function() {
                     //Write app code here
+                    Rally.data.TreeModelFactory.getModel({
+                      //type: 'hierarchicalrequirement',
+                      type: 'portfolioitem/theme',
+                      success: function onSuccess(res) {
+                        console.dir(res);
+            
+                        var rec = Ext.create(res);
+            
+                        console.dir(rec);
+                        console.log("Parent names", res.getParentFieldNames());
+                        console.log("Child names", res.getChildFieldNames());
+                      }
+                    });
+            
+                    var store = Ext.create('Ext.data.TreeStore', {
+                      root: {
+                          expanded: true,
+                          children: [
+                              { text: "detention", leaf: true },
+                              { text: "homework", expanded: true, children: [
+                                  { text: "book report", leaf: true },
+                                  { text: "alegrbra", leaf: true}
+                              ] },
+                              { text: "buy lottery tickets", leaf: true }
+                          ]
+                      }
+                  });
+            
+                  this.add(Ext.create('Ext.tree.Panel', {
+                      title: 'Simple Tree',
+                      width: 200,
+                      height: 150,
+                      store: store,
+                      rootVisible: false,
+                  }));
                 }
             });
 
