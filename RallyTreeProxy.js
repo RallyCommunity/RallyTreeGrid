@@ -119,7 +119,8 @@
         for (i = 0, ii = data.length; i < ii; i ++) {
           console.log("Data processing", typeof data[i], data[i]);
           //if (Ext.isFunction(data[i]) || Ext.isObject(data[i])) {
-            this.operation.resultSet.push(data[i]);
+          data[i].data.cls = data[i].raw._type.toLowerCase();
+          this.operation.resultSet.push(data[i]);
           //}
         }
       }

@@ -1,3 +1,28 @@
 .app {
      /* Add app styles here */
 }
+
+.x-tree-icon-leaf, .x-tree-icon-parent, .x-grid-tree-node-expanded .x-tree-icon-parent {
+  background: url(/slm/images/icon_portfolio_item.gif);
+}
+
+.portfolioitem .x-tree-icon {
+  background: url(/slm/images/icon_portfolio_item.gif);	
+}
+
+.hierarchicalrequirement .x-tree-icon {
+  background: url(/slm/images/icon_story.gif);	
+}
+
+.task .x-tree-icon {
+  background: url(/slm/images/icon_task.gif);	
+}
+
+.defect .x-tree-icon {
+  background: url(/slm/images/icon_defect.gif);	
+}
+
+.testcase .x-tree-icon {
+  background: url(data:image/gif;base64,R0lGODlhEAAQAMQWAEaiGcvLy2VmmEeiGWZlmWVlmZjLfzOZAP7//mVlmJnLf0ejGWZmmmRll2VmmXa6VLXaozOYADKYAMzMzGZmmf///////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABYALAAAAAAQABAAAAV7oGVBDwA8kKiuRiRJkWusKvRWOC6l9PMeMN2D0HAQKAkAzFWRNAc5HGUQOzSdkkUlMJlUCg+mK9J8RCsUW+zFhlS6XorF8BpHFIizfPQYnCAIXHBoKwxnZw4rFFuDAhQODnsii2cFUjQCb4IVmZIqlnqeKgQOjhSniSohADs=)
+}
+

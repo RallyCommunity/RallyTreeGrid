@@ -128,7 +128,8 @@
                     for (i = 0, ii = data.length; i < ii; i ++) {
                       console.log("Data processing", typeof data[i], data[i]);
                       //if (Ext.isFunction(data[i]) || Ext.isObject(data[i])) {
-                        this.operation.resultSet.push(data[i]);
+                      data[i].data.cls = data[i].raw._type.toLowerCase();
+                      this.operation.resultSet.push(data[i]);
                       //}
                     }
                   }
@@ -330,7 +331,7 @@
                           }
                         }
             
-                        console.log("Query for ", model.modelName, query.toString());
+                        //console.log("Query for ", model.modelName, query.toString());
             
                         return query;
                       };
@@ -360,6 +361,8 @@
                             return ["TestCase"];
                           } else if ({"hierarchicalrequirement": 1}.hasOwnProperty(typeName)) {
                             return ["Parent", "PortfolioItem"];
+                          } else if ({testcasestep: 1}.hasOwnProperty(typeName)) {
+                            return ["TestCase"];
                           } else {
                             return ["Parent"];
                           }
@@ -375,7 +378,7 @@
                           } else if (typeName === "defect") {
                             return ["Tasks"];
                           } else if (typeName === "testcase") {
-                            return ["TestCaseSteps"];
+                            return ["Steps"];
                           } else if (typeName.indexOf("portfolioitem") !== -1) {
                             return ["Children", "UserStories"];
                           } else {
@@ -476,6 +479,92 @@
             }(this));
             (function (global) {
             
+              Ext.define("Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2", {
+                extend: 'Ext.XTemplate',
+            
+                config: {
+                    /**
+                     * @cfg {String} width define a width if necessary to fit where it's being used
+                     */
+                    width: '100%',
+                    /**
+                     * @cfg {String} height define a height if necessary to fit where it's being used
+                     */
+                    height: '20px',
+                    /**
+                     * @cfg {String} percentDoneName sometimes it's necessary to name the variable used as the percent done replacement in the template,
+                     * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
+                     */
+                    /**
+                     * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.
+                     * Defaults to:
+                     *      function(){ return false; }
+                     */
+                    showDangerNotificationFn: function() {
+                      return false;
+                    },
+            
+                    percentDoneName: "PercentDoneByStoryPlanEstimate",
+            
+                    showDangerNotificationFn: function (recordData) {
+                      return (!recordData.PlannedEndDate && !recordData.ActualEndDate) || recordData.UnEstimatedLeafStoryCount > 0;
+                    },
+            
+                    /**
+                     * @cfg {Boolean} If the percent done is 0%, do not show the bar at all
+                     */
+                    showOnlyIfInProgress: false
+                },
+            
+                constructor: function(config) {
+                    this.initConfig(config);
+                    config = this.config;
+                    var me = this;
+                    var templateConfig = [
+                        '<tpl if="this.shouldShowPercentDone(values)">',
+                        '<div class="percentDoneContainer field-{[this.getPercentDoneName()]}" style="width: ' + config.width + '; height: ' + config.height + '; line-height: ' + config.height + '">',
+                        '<div class="percentDoneBar" style="background-color: {[this.calculateColor(values)]}; width: {[this.calculatePercent(values)]}; "></div>',
+                        '<tpl if="this.showDangerNotification(values)"><div class="percentDoneDangerNotification"></div></tpl>',
+                        '<div class="percentDoneLabel">',
+                        '{[this.calculatePercent(values)]}',
+                        '</div>',
+                        '</div>',
+                        '</tpl>',
+                        {
+                            shouldShowPercentDone: function(recordData) {
+                              if (!Ext.isNumber(recordData[config.percentDoneName])) {
+                                return false;
+                              }
+            
+                              if (config.showOnlyIfInProgress) {
+                                return recordData[config.percentDoneName] > 0;
+                              } else {
+                                return true;
+                              }
+                            },
+                            calculatePercent: function(recordData) {
+                                var percentDone = recordData[config.percentDoneName];
+                                return Math.round(percentDone * 100) + '%';
+                            },
+                            calculateColor: function(recordData) {
+                                var colorObject = Rally.util.HealthColorCalculator.calculateHealthColorForPortfolioItemData(recordData, me.getPercentDoneName());
+                                return colorObject.hex;
+                            },
+                            showDangerNotification: config.showDangerNotificationFn
+                        }];
+                    /**
+                     * @param {Date}  config.startDate  (days since the epoch or date type where Tomorrow()-Today() = 1.0 (real))
+                     * @param {Date} config.endDate (same type as startDate)
+                     * @param {Date} config.asOfDate (same type as startDate) - Most often today. The naming of
+                     * @param {Boolean} config.inProgress
+                     */
+                    return this.callParent(templateConfig);
+                }
+              });
+            
+            }(this));
+            (function (global) {
+            
               Ext.override(Rally.env.Server, {
                 getWsapiUrl: function(version) {
                   return this.getContextUrl() + "/webservice/1.39";
@@ -493,7 +582,6 @@
                     rootArtifacts: ['portfolioitem/theme' ],
                     childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
                     //canExpandFn: function(rec) {
-                      
                     //},
                     listeners: {
                       append: function appened() {
@@ -507,7 +595,7 @@
                     title: 'Simple Tree',
                     width: '100%',
                     height: '100%',
-                    componentCls: 'rally-grid',
+                    componentCls: 'rallytree rally-grid',
                     store: store,
                     rootVisible: false,
                     lines: false,
@@ -517,8 +605,22 @@
                       dataIndex: 'Name',
                       flex: 2
                     }, {
+                      xtype: 'templatecolumn',
+                      tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+                      text: '% Done by Plan Est',
+                      dataIndex: 'PercentDoneByPlanEstimate',
+                      flex: 1
+                    }, {
                       text: 'Schedule State',
                       dataIndex: 'ScheduleState',
+                      flex: 1
+                    }, {
+                      text: 'Est. Hours',
+                      dataIndex: 'Estimate',
+                      flex: 1
+                    }, {
+                      text: 'Remaining',
+                      dataIndex: 'ToDo',
                       flex: 1
                     }],
                     listeners: {
@@ -546,6 +648,31 @@
         .app {
              /* Add app styles here */
         }
+        
+        .x-tree-icon-leaf, .x-tree-icon-parent, .x-grid-tree-node-expanded .x-tree-icon-parent {
+          background: url(/slm/images/icon_portfolio_item.gif);
+        }
+        
+        .portfolioitem .x-tree-icon {
+          background: url(/slm/images/icon_portfolio_item.gif);	
+        }
+        
+        .hierarchicalrequirement .x-tree-icon {
+          background: url(/slm/images/icon_story.gif);	
+        }
+        
+        .task .x-tree-icon {
+          background: url(/slm/images/icon_task.gif);	
+        }
+        
+        .defect .x-tree-icon {
+          background: url(/slm/images/icon_defect.gif);	
+        }
+        
+        .testcase .x-tree-icon {
+          background: url(data:image/gif;base64,R0lGODlhEAAQAMQWAEaiGcvLy2VmmEeiGWZlmWVlmZjLfzOZAP7//mVlmJnLf0ejGWZmmmRll2VmmXa6VLXaozOYADKYAMzMzGZmmf///////wAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACH5BAEAABYALAAAAAAQABAAAAV7oGVBDwA8kKiuRiRJkWusKvRWOC6l9PMeMN2D0HAQKAkAzFWRNAc5HGUQOzSdkkUlMJlUCg+mK9J8RCsUW+zFhlS6XorF8BpHFIizfPQYnCAIXHBoKwxnZw4rFFuDAhQODnsii2cFUjQCb4IVmZIqlnqeKgQOjhSniSohADs=)
+        }
+        
     </style>
 </head>
 <body></body>

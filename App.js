@@ -17,7 +17,6 @@
         rootArtifacts: ['portfolioitem/theme' ],
         childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
         //canExpandFn: function(rec) {
-          
         //},
         listeners: {
           append: function appened() {
@@ -31,7 +30,7 @@
         title: 'Simple Tree',
         width: '100%',
         height: '100%',
-        componentCls: 'rally-grid',
+        componentCls: 'rallytree rally-grid',
         store: store,
         rootVisible: false,
         lines: false,
@@ -41,8 +40,22 @@
           dataIndex: 'Name',
           flex: 2
         }, {
+          xtype: 'templatecolumn',
+          tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+          text: '% Done by Plan Est',
+          dataIndex: 'PercentDoneByPlanEstimate',
+          flex: 1
+        }, {
           text: 'Schedule State',
           dataIndex: 'ScheduleState',
+          flex: 1
+        }, {
+          text: 'Est. Hours',
+          dataIndex: 'Estimate',
+          flex: 1
+        }, {
+          text: 'Remaining',
+          dataIndex: 'ToDo',
           flex: 1
         }],
         listeners: {

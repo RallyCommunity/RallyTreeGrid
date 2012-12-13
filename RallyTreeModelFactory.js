@@ -137,7 +137,7 @@
               }
             }
 
-            console.log("Query for ", model.modelName, query.toString());
+            //console.log("Query for ", model.modelName, query.toString());
 
             return query;
           };
@@ -167,6 +167,8 @@
                 return ["TestCase"];
               } else if ({"hierarchicalrequirement": 1}.hasOwnProperty(typeName)) {
                 return ["Parent", "PortfolioItem"];
+              } else if ({testcasestep: 1}.hasOwnProperty(typeName)) {
+                return ["TestCase"];
               } else {
                 return ["Parent"];
               }
@@ -182,7 +184,7 @@
               } else if (typeName === "defect") {
                 return ["Tasks"];
               } else if (typeName === "testcase") {
-                return ["TestCaseSteps"];
+                return ["Steps"];
               } else if (typeName.indexOf("portfolioitem") !== -1) {
                 return ["Children", "UserStories"];
               } else {
