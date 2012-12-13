@@ -1,4 +1,5 @@
 (function (global) {
+
   Ext.override(Rally.env.Server, {
     getWsapiUrl: function(version) {
       return this.getContextUrl() + "/webservice/1.39";
@@ -11,15 +12,17 @@
 
     launch: function() {
       var store = Ext.create('Rally.data.WsapiTreeStore', {
-        rootArtifacts: ['portfolioitem/theme'],
-        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement'],
+        //rootArtifacts: ['hierarchicalrequirement'],
+        //childArtifacts: ['hierarchicalrequirement', 'task'],
+        rootArtifacts: ['portfolioitem/theme' ],
+        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
         //canExpandFn: function(rec) {
           
         //},
         listeners: {
           append: function appened() {
-            console.log("Appending Data");
-            console.dir(arguments);
+            //console.log("Appending Data");
+            //console.dir(arguments);
           }
         }
       });
@@ -31,6 +34,7 @@
         componentCls: 'rally-grid',
         store: store,
         rootVisible: false,
+        lines: false,
         columns: [{
           xtype: 'treecolumn',
           text: 'Name',
@@ -43,11 +47,12 @@
         }],
         listeners: {
           afteritemexpand: function (node, idx, elt, oOpt) {
-            console.log("Expaned node", node);
+            //console.log("Expaned node", node);
           },
           load: function (store, node, recs, success, oOpt) {
-            console.log("Loaded", success, recs, node);
-            node.expand();
+            console.log("Loaded", recs);
+            console.dir(node);
+            //node.expand();
           }
         }
       }));

@@ -53,7 +53,7 @@
               Ext.create("Rally.data.WsapiDataStore", {
                 autoLoad: true,
                 model: model,
-                filter: model.buildParentQueryFn(model, null),
+                filters: model.buildParentQueryFn(model, null),
                 listeners: {
                   load: function loaded(store, data, success) {
                     processCB(store, data, type);
@@ -80,36 +80,18 @@
 
         (function iHateJS(type) {
           Rally.data.TreeModelFactory.getModel({
-            //canExpandFn: me.canExpandFn,
+            canExpandFn: me.canExpandFn,
             type: type,
             success: function onSuccess(model) {
-
-              Rally.data.ModelFactory.getModel({
-                type: type,
-                success: function onNormSuccess(rmodel) {
-
-                  var whichModel = model;
-
-                  if (type.indexOf("feature") != -1) {
-                    //whichModel = rmodel;
-                    //debugger;
-                  }
-
               Ext.create("Rally.data.WsapiDataStore", {
                 autoLoad: true,
-                filters: [{
-                  property: "Parent",
-                  value: operation.node.raw._ref
-                }],
-                model: whichModel,
+                filters: model.buildParentQueryFn(model, operation.node),
+                model: model,
                 listeners: {
                   load: function loaded(store, data, success) {
                     console.log("Loaded Children", type, store, data, success);
                     processCB(store, data, type);
                   }
-                }
-              });
-
                 }
               });
             }
@@ -123,6 +105,7 @@
       console.log("Loaded " + artifactType, data, this);
 
       if (this.loadedArtifacts[artifactType.toLowerCase()]) {
+        console.log("Already processed, abort");
         return;
       }
 
@@ -134,7 +117,10 @@
 
       if (data) {
         for (i = 0, ii = data.length; i < ii; i ++) {
-          this.operation.resultSet.push(data[i]);
+          console.log("Data processing", typeof data[i], data[i]);
+          //if (Ext.isFunction(data[i]) || Ext.isObject(data[i])) {
+            this.operation.resultSet.push(data[i]);
+          //}
         }
       }
 

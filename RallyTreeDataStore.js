@@ -1,4 +1,6 @@
 (function (global) {
+  var totalProcessed = 0;
+
   Ext.define("Rally.data.WsapiTreeStore", {
     extend: "Ext.data.TreeStore",
 
@@ -12,18 +14,20 @@
 
       Ext.apply(me, config);
 
+      me.callParent([config]);
+
       console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
 
-      me.root = Ext.create("Rally.data.TreeRootModel", {
-        rootArtifacts: me.rootArtifacts
-      });
+      me.setRootNode(Ext.create("Rally.data.TreeRootModel", {
+        rootArtifacts: me.rootArtifacts,
+        leaf: false
+      }));
 
       //me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
         //rootArtifact: me.rootArtifacts,
         //childArtifacts: me.childArtifacts
       //});
 
-      me.callParent([config]);
 
     },
 
@@ -32,10 +36,16 @@
       console.dir(options);
       console.log("Is Node Loaded?", options.node.isLoaded());
 
-      var me = this;
+      var me = this,
+          ocb = options.callback;
 
       options.callback = function t() {
-        console.log("Tree Loaded", arguments);
+        totalProcessed = totalProcessed + arguments[0].length;
+        console.log("Tree Loaded", totalProcessed, arguments);
+
+        if (ocb) {
+          Ext.callback(ocb, options.scope || me, arguments);
+        }
       };
 
       me.setProxy(Ext.create("Rally.data.WsapiTreeProxy", {
