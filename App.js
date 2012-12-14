@@ -12,10 +12,10 @@
 
     launch: function() {
       var store = Ext.create('Rally.data.WsapiTreeStore', {
-        rootArtifacts: ['hierarchicalrequirement'],
-        childArtifacts: ['hierarchicalrequirement', 'task'],
-        //rootArtifacts: ['portfolioitem/theme' ],
-        //childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
+        //rootArtifacts: ['hierarchicalrequirement'],
+        //childArtifacts: ['hierarchicalrequirement', 'task'],
+        rootArtifacts: ['portfolioitem/theme' ],
+        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
         //canExpandFn: function(rec) {
         //},
         listeners: {

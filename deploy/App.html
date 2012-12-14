@@ -27,14 +27,14 @@
                     totalProperty: "TotalResultCount"
                   });
             
-                  console.log("For Artifacts", me.rootArtifacts, me.childArtifacts);
+                  //console.log("For Artifacts", me.rootArtifacts, me.childArtifacts);
                   //debugger;
                 },
             
                 read: function read(operation, callback, scope) {
                   var me = this;
             
-                  console.log("Calling WTP Read", operation);
+                  //console.log("Calling WTP Read", operation);
             
                   if (me.isRoot) {
                     me._readRoot(operation, callback, scope);
@@ -49,7 +49,7 @@
                       processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
                       i= 0, ii = me.rootArtifacts.length;
             
-                  console.log("Reading Root");
+                  //console.log("Reading Root");
             
                   for (; i < ii; i++) {
                     loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
@@ -93,7 +93,7 @@
                       processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
                       i= 0, ii = me.childArtifacts.length;
             
-                  console.log("Reading Children");
+                  //console.log("Reading Children");
             
                   for (; i < ii; i++) {
                     //console.log("Fetching children of type", me.childArtifacts[i], i, ii);
@@ -114,7 +114,7 @@
                             model: model,
                             listeners: {
                               load: function loaded(store, data, success) {
-                                console.log("Loaded Children", type, store, data, success);
+                                //console.log("Loaded Children", type, store, data, success);
                                 processCB(store, data, type);
                               }
                             }
@@ -127,10 +127,10 @@
                 },
             
                 _processResults: function (store, data, artifactType) {
-                  console.log("Loaded " + artifactType, data, this);
+                  //console.log("Loaded " + artifactType, data, this);
             
                   if (this.loadedArtifacts[artifactType.toLowerCase()]) {
-                    console.log("Already processed, abort");
+                    //console.log("Already processed, abort");
                     return;
                   }
             
@@ -146,7 +146,7 @@
             
                   if (data) {
                     for (i = 0, ii = data.length; i < ii; i ++) {
-                      console.log("Data processing", typeof data[i], data[i]);
+                      //console.log("Data processing", typeof data[i], data[i]);
             
                       data[i].data.cls = data[i].raw._type.toLowerCase();
                       this.operation.resultSet.push(data[i]);
@@ -162,13 +162,13 @@
                   }
             
                   if (done) {
-                    console.log("Done");
+                    //console.log("Done");
             
                     this.operation.records = this.operation.resultSet;
                     this.operation.setCompleted();
                     this.operation.setSuccessful();
             
-                    console.dir(this.operation);
+                    //console.dir(this.operation);
                     //debugger;
             
                     Ext.callback(this.callback, this.scope || this, [this.operation]);
@@ -198,7 +198,7 @@
                   });
                   Ext.apply(o, options);
             
-                  console.log("TreeRootModel", o, options);
+                  //console.log("TreeRootModel", o, options);
             
                   me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
                     rootArtifacts: o.rootArtifacts,
@@ -304,16 +304,16 @@
                             value: parentRef
                           });
                         } else if (modelType === "hierarchicalrequirement") {
-                          console.log("Create Query for Stories");
+                          //console.log("Create Query for Stories");
                           if (parentType === modelType) {
-                            console.log("Its a Story");
+                            //console.log("Its a Story");
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: 'Parent',
                               operator: "=",
                               value: parentRef
                             });
                           } else if (parentType === null) {
-                            console.log("Top level story");
+                            //console.log("Top level story");
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: 'Parent',
                               operator: "=",
@@ -326,7 +326,7 @@
                               //value: 'null'
                             //}));
                           } else if (parentType.indexOf("portfolioitem") !== -1) {
-                            console.log("Its a PI");
+                            //console.log("Its a PI");
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: 'PortfolioItem',
                               operator: "=",
@@ -334,7 +334,7 @@
                             });
                           }
                         } else {
-                          console.log("Don't know what this is", modelType, parentType);
+                          //console.log("Don't know what this is", modelType, parentType);
                           query = Ext.create("Rally.data.QueryFilter", {
                             property: filteredNames[0],
                             operator: "=",
@@ -360,7 +360,7 @@
                       extend: baseModel,
             
                       constructor: function ctor(config) {
-                        console.log("Tree Model Config options", config);
+                        //console.log("Tree Model Config options", config);
                         this.callParent([config]);
                       },
             
@@ -459,7 +459,7 @@
             
                   me.callParent([config]);
             
-                  console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
+                  //console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
             
                   me.setRootNode(Ext.create("Rally.data.TreeRootModel", {
                     rootArtifacts: me.rootArtifacts,
@@ -496,13 +496,13 @@
                     isPaging: true
                   };
             
-                  console.log("Tree Store Load Options");
-                  console.dir(options);
-                  console.log("Is Node Loaded?", options.node.isLoaded());
+                  //console.log("Tree Store Load Options");
+                  //console.dir(options);
+                  //console.log("Is Node Loaded?", options.node.isLoaded());
             
             
                   options.callback = function updateTotals(nodes, ops, success) {
-                    console.log("Tree Loaded", totalProcessed, arguments);
+                    //console.log("Tree Loaded", totalProcessed, arguments);
             
                     if (ocb) {
                       Ext.callback(ocb, options.scope || me, arguments);
@@ -576,16 +576,53 @@
                 },
             
                 constructor: function rally_tree_grid_ctor(config) {
+                  var me = this;
             
-                  this.callParent(arguments);
+                  me.callParent(arguments);
             
-                  this.getView().on("beforedrop", this._onBeforeDrop);
+                  me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
                 },
             
-                _onBeforeDrop: function _onBeforeDrop(node, data, overModel, dropPosition, dropFunciton, eOpts) {
+                _onBeforeDrop: function _onBeforeDrop(elt, data, overModel, dropPosition, dropFunciton, eOpts) {
                   console.log("On Before Drop", arguments);
             
+                  if (dropPosition === "append") {
+                    return this._appendNodes.apply(this, arguments);
+                  } else if ((dropPosition === "before") || (dropPosition === "after")) {
+                    return this._rerankNodes.apply(this, arguments);
+                  } else {
+                    return false;
+                  }
+                },
+            
+                _appendNodes: function _appendNodes(elt, data, overModel, dropPosition, dropFunction, eOpts) {
+                  var me = this,
+                      recs,
+                      i, ii;
+            
+                  if (!data) {
+                    return false;
+                  }
+            
+                  
+            
                   return true;
+                },
+            
+                _doReparentPI: function _doReparentPI(parentModel, childModel) {
+                },
+            
+                _doReparentUS: function _doReparentUS(parentModel, childModel) {
+                },
+            
+                _doReparentTA: function _doReparentTA(parentModel, childModel) {
+                },
+            
+                _doReparentDE: function _doReparentDE(parentModel, childModel) {
+                },
+            
+                _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
+            
                 }
             
               });
@@ -690,10 +727,10 @@
             
                 launch: function() {
                   var store = Ext.create('Rally.data.WsapiTreeStore', {
-                    rootArtifacts: ['hierarchicalrequirement'],
-                    childArtifacts: ['hierarchicalrequirement', 'task'],
-                    //rootArtifacts: ['portfolioitem/theme' ],
-                    //childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
+                    //rootArtifacts: ['hierarchicalrequirement'],
+                    //childArtifacts: ['hierarchicalrequirement', 'task'],
+                    rootArtifacts: ['portfolioitem/theme' ],
+                    childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
                     //canExpandFn: function(rec) {
                     //},
                     listeners: {
