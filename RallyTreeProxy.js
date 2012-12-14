@@ -50,16 +50,28 @@
             type: type,
             canExpandFn: me.canExpandFn,
             success: function onSuccess(model) {
-              Ext.create("Rally.data.WsapiDataStore", {
-                autoLoad: true,
+              var wsapi = Ext.create("Rally.data.WsapiDataStore", {
+                autoLoad: false,
                 model: model,
+                pageSize: me.wsapiStoreOptions.limit,
+                startPage: me.wsapiStoreOptions.page,
+                page: me.wsapiStoreOptions.page,
+                start: me.wsapiStoreOptions.start,
+                limit: me.wsapiStoreOptions.limit,
+                isPaging: me.wsapiStoreOptions.isPaging,
                 filters: model.buildParentQueryFn(model, null),
+                sorters: [{
+                  property: "Rank",
+                  direction: "ASC"
+                }],
                 listeners: {
                   load: function loaded(store, data, success) {
                     processCB(store, data, type);
                   }
                 }
               });
+
+              wsapi.loadPage(me.wsapiStoreOptions.page);
             }
           });
         }(me.rootArtifacts[i].toLowerCase()));
@@ -86,6 +98,10 @@
               Ext.create("Rally.data.WsapiDataStore", {
                 autoLoad: true,
                 filters: model.buildParentQueryFn(model, operation.node),
+                sorters: [{
+                  property: "Rank",
+                  direction: "ASC"
+                }],
                 model: model,
                 listeners: {
                   load: function loaded(store, data, success) {

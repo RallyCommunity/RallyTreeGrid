@@ -59,16 +59,28 @@
                         type: type,
                         canExpandFn: me.canExpandFn,
                         success: function onSuccess(model) {
-                          Ext.create("Rally.data.WsapiDataStore", {
-                            autoLoad: true,
+                          var wsapi = Ext.create("Rally.data.WsapiDataStore", {
+                            autoLoad: false,
                             model: model,
+                            pageSize: me.wsapiStoreOptions.limit,
+                            startPage: me.wsapiStoreOptions.page,
+                            page: me.wsapiStoreOptions.page,
+                            start: me.wsapiStoreOptions.start,
+                            limit: me.wsapiStoreOptions.limit,
+                            isPaging: me.wsapiStoreOptions.isPaging,
                             filters: model.buildParentQueryFn(model, null),
+                            sorters: [{
+                              property: "Rank",
+                              direction: "ASC"
+                            }],
                             listeners: {
                               load: function loaded(store, data, success) {
                                 processCB(store, data, type);
                               }
                             }
                           });
+            
+                          wsapi.loadPage(me.wsapiStoreOptions.page);
                         }
                       });
                     }(me.rootArtifacts[i].toLowerCase()));
@@ -95,6 +107,10 @@
                           Ext.create("Rally.data.WsapiDataStore", {
                             autoLoad: true,
                             filters: model.buildParentQueryFn(model, operation.node),
+                            sorters: [{
+                              property: "Rank",
+                              direction: "ASC"
+                            }],
                             model: model,
                             listeners: {
                               load: function loaded(store, data, success) {
@@ -304,11 +320,11 @@
                               value: "null"
                             });
             
-                            query = query.and(Ext.create("Rally.data.QueryFilter", {
-                              property: 'PortfolioItem',
-                              operator: '=',
-                              value: 'null'
-                            }));
+                            //query = query.and(Ext.create("Rally.data.QueryFilter", {
+                              //property: 'PortfolioItem',
+                              //operator: '=',
+                              //value: 'null'
+                            //}));
                           } else if (parentType.indexOf("portfolioitem") !== -1) {
                             console.log("Its a PI");
                             query = Ext.create("Rally.data.QueryFilter", {
@@ -470,12 +486,20 @@
                 },
             
                 load: function load(options) {
+                  var me = this,
+                      ocb = options.callback;
+            
+                  options.wsapi = {
+                    page: me.currentPage,
+                    start: (me.currentPage - 1) * me.pageSize,
+                    limit: me.pageSize,
+                    isPaging: true
+                  };
+            
                   console.log("Tree Store Load Options");
                   console.dir(options);
                   console.log("Is Node Loaded?", options.node.isLoaded());
             
-                  var me = this,
-                      ocb = options.callback;
             
                   options.callback = function updateTotals(nodes, ops, success) {
                     console.log("Tree Loaded", totalProcessed, arguments);
@@ -490,7 +514,8 @@
                     rootArtifacts: me.rootArtifacts,
                     childArtifacts: me.childArtifacts,
                     isRoot: me.getRootNode().modelName === options.node.modelName,
-                    canExpandFn: me.canExpandFn
+                    canExpandFn: me.canExpandFn,
+                    wsapiStoreOptions: options.wsapi
                   }));
             
                   me.callParent([options]);
@@ -506,15 +531,17 @@
             
                 loadPage: function loadPage(num, options) {
                   this.currentPage = num;
+                  options = options || {};
+                  options.node = this.getRootNode();
                   this.load(options);
                 },
             
                 nextPage: function nextPage(options) {
-                  this.loadPage(this.currentPage + 1);
+                  this.loadPage(this.currentPage + 1), options;
                 },
             
                 previousPage: function previousPage(options) {
-                  this.loadPage(this.currentPage - 1);
+                  this.loadPage(this.currentPage - 1, options);
                 },
             
                 getPageSize: function getPageSize() {
@@ -649,10 +676,10 @@
             
                 launch: function() {
                   var store = Ext.create('Rally.data.WsapiTreeStore', {
-                    //rootArtifacts: ['hierarchicalrequirement'],
-                    //childArtifacts: ['hierarchicalrequirement', 'task'],
-                    rootArtifacts: ['portfolioitem/theme' ],
-                    childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
+                    rootArtifacts: ['hierarchicalrequirement'],
+                    childArtifacts: ['hierarchicalrequirement', 'task'],
+                    //rootArtifacts: ['portfolioitem/theme' ],
+                    //childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
                     //canExpandFn: function(rec) {
                     //},
                     listeners: {

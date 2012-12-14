@@ -107,11 +107,11 @@
                   value: "null"
                 });
 
-                query = query.and(Ext.create("Rally.data.QueryFilter", {
-                  property: 'PortfolioItem',
-                  operator: '=',
-                  value: 'null'
-                }));
+                //query = query.and(Ext.create("Rally.data.QueryFilter", {
+                  //property: 'PortfolioItem',
+                  //operator: '=',
+                  //value: 'null'
+                //}));
               } else if (parentType.indexOf("portfolioitem") !== -1) {
                 console.log("Its a PI");
                 query = Ext.create("Rally.data.QueryFilter", {

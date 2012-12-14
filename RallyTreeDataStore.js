@@ -50,12 +50,20 @@
     },
 
     load: function load(options) {
+      var me = this,
+          ocb = options.callback;
+
+      options.wsapi = {
+        page: me.currentPage,
+        start: (me.currentPage - 1) * me.pageSize,
+        limit: me.pageSize,
+        isPaging: true
+      };
+
       console.log("Tree Store Load Options");
       console.dir(options);
       console.log("Is Node Loaded?", options.node.isLoaded());
 
-      var me = this,
-          ocb = options.callback;
 
       options.callback = function updateTotals(nodes, ops, success) {
         console.log("Tree Loaded", totalProcessed, arguments);
@@ -70,7 +78,8 @@
         rootArtifacts: me.rootArtifacts,
         childArtifacts: me.childArtifacts,
         isRoot: me.getRootNode().modelName === options.node.modelName,
-        canExpandFn: me.canExpandFn
+        canExpandFn: me.canExpandFn,
+        wsapiStoreOptions: options.wsapi
       }));
 
       me.callParent([options]);
@@ -86,15 +95,17 @@
 
     loadPage: function loadPage(num, options) {
       this.currentPage = num;
+      options = options || {};
+      options.node = this.getRootNode();
       this.load(options);
     },
 
     nextPage: function nextPage(options) {
-      this.loadPage(this.currentPage + 1);
+      this.loadPage(this.currentPage + 1), options;
     },
 
     previousPage: function previousPage(options) {
-      this.loadPage(this.currentPage - 1);
+      this.loadPage(this.currentPage - 1, options);
     },
 
     getPageSize: function getPageSize() {
