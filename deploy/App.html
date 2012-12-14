@@ -121,16 +121,19 @@
                   if (typeof this.operation.resultSet === "undefined") {
                     this.operation.resultSet = [];
                   }
+                  if (typeof this.operation.totalResultCount === "undefined") {
+                    this.operation.totalResultCount = 0;
+                  }
             
                   var i, ii, k, done = true;
+                  this.operation.totalResultCount = this.operation.totalResultCount + store.getTotalCount();
             
                   if (data) {
                     for (i = 0, ii = data.length; i < ii; i ++) {
                       console.log("Data processing", typeof data[i], data[i]);
-                      //if (Ext.isFunction(data[i]) || Ext.isObject(data[i])) {
+            
                       data[i].data.cls = data[i].raw._type.toLowerCase();
                       this.operation.resultSet.push(data[i]);
-                      //}
                     }
                   }
             
@@ -152,7 +155,7 @@
                     console.dir(this.operation);
                     //debugger;
             
-                    Ext.callback(this.callback, this.scope || me, [this.operation]);
+                    Ext.callback(this.callback, this.scope || this, [this.operation]);
                   }
                 }
             
@@ -424,6 +427,13 @@
                 rootArtifacts: ["HierarchicalRequirement", "Defect"],
                 childArtifacts: ["HierarchicalRequirement", "Task"],
             
+                pageSize: 25,
+            
+                totalProcessed: 0,
+                totalCount: 0,
+            
+                currentPage: 1,
+            
                 constructor: function wsapi_tree_store_ctor(config) {
                   var me = this,
                       trmConfig = {};
@@ -448,6 +458,17 @@
             
                 },
             
+                onProxyLoad: function(operation) {
+                  var me = this;
+            
+                  if (operation.success && !operation.node.parentNode) {
+                    me.totalProcessed = me.totalProcessed + operation.resultSet.length;
+                    me.totalCount = operation.totalResultCount;
+                  }
+            
+                  me.callParent(arguments);
+                },
+            
                 load: function load(options) {
                   console.log("Tree Store Load Options");
                   console.dir(options);
@@ -456,8 +477,7 @@
                   var me = this,
                       ocb = options.callback;
             
-                  options.callback = function t() {
-                    totalProcessed = totalProcessed + arguments[0].length;
+                  options.callback = function updateTotals(nodes, ops, success) {
                     console.log("Tree Loaded", totalProcessed, arguments);
             
                     if (ocb) {
@@ -474,7 +494,59 @@
                   }));
             
                   me.callParent([options]);
+                },
+            
+                getCount: function getCount() {
+                  return this.totalProcessed || 0;
+                },
+            
+                getTotalCount: function getTotalCount() {
+                  return this.totalCount || 0;
+                },
+            
+                loadPage: function loadPage(num, options) {
+                  this.currentPage = num;
+                  this.load(options);
+                },
+            
+                nextPage: function nextPage(options) {
+                  this.loadPage(this.currentPage + 1);
+                },
+            
+                previousPage: function previousPage(options) {
+                  this.loadPage(this.currentPage - 1);
+                },
+            
+                getPageSize: function getPageSize() {
+                  return this.pageSize;
                 }
+            
+              });
+            }(this));
+            (function (global) {
+            
+              Ext.define("Rally.ui.tree.grid.Panel", {
+                extend: "Ext.tree.Panel",
+            
+                alias: "wiget.rallytreegrid",
+            
+                config: {
+                  width: "100%",
+            
+                  height: "100%",
+            
+                  componentCls: "rallytree rally-grid",
+            
+                  rootVisible: false,
+            
+                  lines: false
+                },
+            
+                constructor: function rally_tree_grid_ctor(config) {
+            
+                  this.callParent(arguments);
+                }
+            
               });
             }(this));
             (function (global) {
@@ -591,14 +663,14 @@
                     }
                   });
             
-                  this.add(Ext.create('Ext.tree.Panel', {
-                    title: 'Simple Tree',
-                    width: '100%',
-                    height: '100%',
-                    componentCls: 'rallytree rally-grid',
+                  this.add(Ext.create('Rally.ui.tree.grid.Panel', {
                     store: store,
-                    rootVisible: false,
-                    lines: false,
+                    dockedItems: [{
+                      xtype: 'rallypagingtoolbar',
+                      store: store,   // same store GridPanel is using
+                      dock: 'bottom',
+                      displayInfo: true
+                    }],
                     columns: [{
                       xtype: 'treecolumn',
                       text: 'Name',
@@ -622,17 +694,7 @@
                       text: 'Remaining',
                       dataIndex: 'ToDo',
                       flex: 1
-                    }],
-                    listeners: {
-                      afteritemexpand: function (node, idx, elt, oOpt) {
-                        //console.log("Expaned node", node);
-                      },
-                      load: function (store, node, recs, success, oOpt) {
-                        console.log("Loaded", recs);
-                        console.dir(node);
-                        //node.expand();
-                      }
-                    }
+                    }]
                   }));
                 }
               });

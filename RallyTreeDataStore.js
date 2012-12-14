@@ -7,6 +7,13 @@
     rootArtifacts: ["HierarchicalRequirement", "Defect"],
     childArtifacts: ["HierarchicalRequirement", "Task"],
 
+    pageSize: 25,
+
+    totalProcessed: 0,
+    totalCount: 0,
+
+    currentPage: 1,
+
     constructor: function wsapi_tree_store_ctor(config) {
       var me = this,
           trmConfig = {};
@@ -31,6 +38,17 @@
 
     },
 
+    onProxyLoad: function(operation) {
+      var me = this;
+
+      if (operation.success && !operation.node.parentNode) {
+        me.totalProcessed = me.totalProcessed + operation.resultSet.length;
+        me.totalCount = operation.totalResultCount;
+      }
+
+      me.callParent(arguments);
+    },
+
     load: function load(options) {
       console.log("Tree Store Load Options");
       console.dir(options);
@@ -39,8 +57,7 @@
       var me = this,
           ocb = options.callback;
 
-      options.callback = function t() {
-        totalProcessed = totalProcessed + arguments[0].length;
+      options.callback = function updateTotals(nodes, ops, success) {
         console.log("Tree Loaded", totalProcessed, arguments);
 
         if (ocb) {
@@ -57,6 +74,32 @@
       }));
 
       me.callParent([options]);
+    },
+
+    getCount: function getCount() {
+      return this.totalProcessed || 0;
+    },
+
+    getTotalCount: function getTotalCount() {
+      return this.totalCount || 0;
+    },
+
+    loadPage: function loadPage(num, options) {
+      this.currentPage = num;
+      this.load(options);
+    },
+
+    nextPage: function nextPage(options) {
+      this.loadPage(this.currentPage + 1);
+    },
+
+    previousPage: function previousPage(options) {
+      this.loadPage(this.currentPage - 1);
+    },
+
+    getPageSize: function getPageSize() {
+      return this.pageSize;
     }
+
   });
 }(this));

@@ -1,6 +1,6 @@
 (function (global) {
 
-  Ext.define("Rally.tree.Panel", {
+  Ext.define("Rally.ui.tree.grid.Panel", {
     extend: "Ext.tree.Panel",
 
     alias: "wiget.rallytreegrid",
@@ -22,4 +22,5 @@
       this.callParent(arguments);
     }
 
+  });
 }(this));

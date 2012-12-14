@@ -8,6 +8,7 @@
         "RallyTreeModel.js",
         "RallyTreeModelFactory.js",
         "RallyTreeDataStore.js",
+        "RallyTreeGrid.js",
         "ModifiedPercentDone.js",
         "App.js"
     ],

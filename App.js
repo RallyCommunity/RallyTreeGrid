@@ -12,10 +12,10 @@
 
     launch: function() {
       var store = Ext.create('Rally.data.WsapiTreeStore', {
-        //rootArtifacts: ['hierarchicalrequirement'],
-        //childArtifacts: ['hierarchicalrequirement', 'task'],
-        rootArtifacts: ['portfolioitem/theme' ],
-        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
+        rootArtifacts: ['hierarchicalrequirement'],
+        childArtifacts: ['hierarchicalrequirement', 'task'],
+        //rootArtifacts: ['portfolioitem/theme' ],
+        //childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
         //canExpandFn: function(rec) {
         //},
         listeners: {
@@ -26,14 +26,14 @@
         }
       });
 
-      this.add(Ext.create('Ext.tree.Panel', {
-        title: 'Simple Tree',
-        width: '100%',
-        height: '100%',
-        componentCls: 'rallytree rally-grid',
+      this.add(Ext.create('Rally.ui.tree.grid.Panel', {
         store: store,
-        rootVisible: false,
-        lines: false,
+        dockedItems: [{
+          xtype: 'rallypagingtoolbar',
+          store: store,   // same store GridPanel is using
+          dock: 'bottom',
+          displayInfo: true
+        }],
         columns: [{
           xtype: 'treecolumn',
           text: 'Name',
@@ -57,17 +57,7 @@
           text: 'Remaining',
           dataIndex: 'ToDo',
           flex: 1
-        }],
-        listeners: {
-          afteritemexpand: function (node, idx, elt, oOpt) {
-            //console.log("Expaned node", node);
-          },
-          load: function (store, node, recs, success, oOpt) {
-            console.log("Loaded", recs);
-            console.dir(node);
-            //node.expand();
-          }
-        }
+        }]
       }));
     }
   });

@@ -112,16 +112,19 @@
       if (typeof this.operation.resultSet === "undefined") {
         this.operation.resultSet = [];
       }
+      if (typeof this.operation.totalResultCount === "undefined") {
+        this.operation.totalResultCount = 0;
+      }
 
       var i, ii, k, done = true;
+      this.operation.totalResultCount = this.operation.totalResultCount + store.getTotalCount();
 
       if (data) {
         for (i = 0, ii = data.length; i < ii; i ++) {
           console.log("Data processing", typeof data[i], data[i]);
-          //if (Ext.isFunction(data[i]) || Ext.isObject(data[i])) {
+
           data[i].data.cls = data[i].raw._type.toLowerCase();
           this.operation.resultSet.push(data[i]);
-          //}
         }
       }
 
@@ -143,7 +146,7 @@
         console.dir(this.operation);
         //debugger;
 
-        Ext.callback(this.callback, this.scope || me, [this.operation]);
+        Ext.callback(this.callback, this.scope || this, [this.operation]);
       }
     }
 
