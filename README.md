@@ -22,7 +22,7 @@ http://screencast.com/t/NnMDX85xDze
 Screenshot
 ----------
 
-![Rally Tree Grid Screenshot](https://raw.github.com/Echo3ToEcho7/RallyTreeGrid/master/deploy/RallyTreeGrid.png)
+![Rally Tree Grid Screenshot](https://raw.github.com/RallyCommunity/RallyTreeGrid/master/deploy/RallyTreeGrid.png)
 
 Example
 -------
