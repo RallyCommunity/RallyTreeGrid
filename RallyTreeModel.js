@@ -16,7 +16,7 @@
       });
       Ext.apply(o, options);
 
-      console.log("TreeRootModel", o, options);
+      //console.log("TreeRootModel", o, options);
 
       me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
         rootArtifacts: o.rootArtifacts,

@@ -91,16 +91,16 @@
                 value: parentRef
               });
             } else if (modelType === "hierarchicalrequirement") {
-              console.log("Create Query for Stories");
+              //console.log("Create Query for Stories");
               if (parentType === modelType) {
-                console.log("Its a Story");
+                //console.log("Its a Story");
                 query = Ext.create("Rally.data.QueryFilter", {
                   property: 'Parent',
                   operator: "=",
                   value: parentRef
                 });
               } else if (parentType === null) {
-                console.log("Top level story");
+                //console.log("Top level story");
                 query = Ext.create("Rally.data.QueryFilter", {
                   property: 'Parent',
                   operator: "=",
@@ -113,7 +113,7 @@
                   //value: 'null'
                 //}));
               } else if (parentType.indexOf("portfolioitem") !== -1) {
-                console.log("Its a PI");
+                //console.log("Its a PI");
                 query = Ext.create("Rally.data.QueryFilter", {
                   property: 'PortfolioItem',
                   operator: "=",
@@ -121,7 +121,7 @@
                 });
               }
             } else {
-              console.log("Don't know what this is", modelType, parentType);
+              //console.log("Don't know what this is", modelType, parentType);
               query = Ext.create("Rally.data.QueryFilter", {
                 property: filteredNames[0],
                 operator: "=",
@@ -147,7 +147,7 @@
           extend: baseModel,
 
           constructor: function ctor(config) {
-            console.log("Tree Model Config options", config);
+            //console.log("Tree Model Config options", config);
             this.callParent([config]);
           },
 

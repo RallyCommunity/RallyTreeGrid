@@ -23,7 +23,7 @@
 
       me.callParent([config]);
 
-      console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
+      //console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
 
       me.setRootNode(Ext.create("Rally.data.TreeRootModel", {
         rootArtifacts: me.rootArtifacts,
@@ -60,13 +60,13 @@
         isPaging: true
       };
 
-      console.log("Tree Store Load Options");
-      console.dir(options);
-      console.log("Is Node Loaded?", options.node.isLoaded());
+      //console.log("Tree Store Load Options");
+      //console.dir(options);
+      //console.log("Is Node Loaded?", options.node.isLoaded());
 
 
       options.callback = function updateTotals(nodes, ops, success) {
-        console.log("Tree Loaded", totalProcessed, arguments);
+        //console.log("Tree Loaded", totalProcessed, arguments);
 
         if (ocb) {
           Ext.callback(ocb, options.scope || me, arguments);

@@ -18,14 +18,14 @@
         totalProperty: "TotalResultCount"
       });
 
-      console.log("For Artifacts", me.rootArtifacts, me.childArtifacts);
+      //console.log("For Artifacts", me.rootArtifacts, me.childArtifacts);
       //debugger;
     },
 
     read: function read(operation, callback, scope) {
       var me = this;
 
-      console.log("Calling WTP Read", operation);
+      //console.log("Calling WTP Read", operation);
 
       if (me.isRoot) {
         me._readRoot(operation, callback, scope);
@@ -40,7 +40,7 @@
           processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
           i= 0, ii = me.rootArtifacts.length;
 
-      console.log("Reading Root");
+      //console.log("Reading Root");
 
       for (; i < ii; i++) {
         loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
@@ -84,7 +84,7 @@
           processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
           i= 0, ii = me.childArtifacts.length;
 
-      console.log("Reading Children");
+      //console.log("Reading Children");
 
       for (; i < ii; i++) {
         //console.log("Fetching children of type", me.childArtifacts[i], i, ii);
@@ -105,7 +105,7 @@
                 model: model,
                 listeners: {
                   load: function loaded(store, data, success) {
-                    console.log("Loaded Children", type, store, data, success);
+                    //console.log("Loaded Children", type, store, data, success);
                     processCB(store, data, type);
                   }
                 }
@@ -118,10 +118,10 @@
     },
 
     _processResults: function (store, data, artifactType) {
-      console.log("Loaded " + artifactType, data, this);
+      //console.log("Loaded " + artifactType, data, this);
 
       if (this.loadedArtifacts[artifactType.toLowerCase()]) {
-        console.log("Already processed, abort");
+        //console.log("Already processed, abort");
         return;
       }
 
@@ -137,7 +137,7 @@
 
       if (data) {
         for (i = 0, ii = data.length; i < ii; i ++) {
-          console.log("Data processing", typeof data[i], data[i]);
+          //console.log("Data processing", typeof data[i], data[i]);
 
           data[i].data.cls = data[i].raw._type.toLowerCase();
           this.operation.resultSet.push(data[i]);
@@ -153,13 +153,13 @@
       }
 
       if (done) {
-        console.log("Done");
+        //console.log("Done");
 
         this.operation.records = this.operation.resultSet;
         this.operation.setCompleted();
         this.operation.setSuccessful();
 
-        console.dir(this.operation);
+        //console.dir(this.operation);
         //debugger;
 
         Ext.callback(this.callback, this.scope || this, [this.operation]);

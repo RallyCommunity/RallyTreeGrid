@@ -566,12 +566,26 @@
             
                   rootVisible: false,
             
-                  lines: false
+                  lines: false,
+            
+                  viewConfig: {
+                		toggleOnDblClick: false,
+                		plugins: { ptype: 'treeviewdragdrop' }
+                	},
+            
                 },
             
                 constructor: function rally_tree_grid_ctor(config) {
             
                   this.callParent(arguments);
+            
+                  this.getView().on("beforedrop", this._onBeforeDrop);
+                },
+            
+                _onBeforeDrop: function _onBeforeDrop(node, data, overModel, dropPosition, dropFunciton, eOpts) {
+                  console.log("On Before Drop", arguments);
+            
+                  return true;
                 }
             
               });
