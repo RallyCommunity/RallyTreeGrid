@@ -727,25 +727,15 @@
             
                 launch: function() {
                   var store = Ext.create('Rally.data.WsapiTreeStore', {
-                    //rootArtifacts: ['hierarchicalrequirement'],
-                    //childArtifacts: ['hierarchicalrequirement', 'task'],
                     rootArtifacts: ['portfolioitem/theme' ],
-                    childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
-                    //canExpandFn: function(rec) {
-                    //},
-                    listeners: {
-                      append: function appened() {
-                        //console.log("Appending Data");
-                        //console.dir(arguments);
-                      }
-                    }
+                    childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task']
                   });
             
                   this.add(Ext.create('Rally.ui.tree.grid.Panel', {
                     store: store,
                     dockedItems: [{
                       xtype: 'rallypagingtoolbar',
-                      store: store,   // same store GridPanel is using
+                      store: store,   // same store TreeGridPanel is using
                       dock: 'bottom',
                       displayInfo: true
                     }],
