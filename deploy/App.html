@@ -781,7 +781,18 @@
                 },
             
                 _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
+                  console.log("ReRank", arguments);
             
+                  var rankType = dropPosition === "after" ? "rankBelow" : "rankAbove",
+                      params = {};
+            
+                  params[rankType] = Rally.util.Ref.getRelativeUri(overModel.raw._ref);
+            
+                  data.records[0].save({
+                    params: params
+                  });
+            
+                  return true;
                 }
             
               });
