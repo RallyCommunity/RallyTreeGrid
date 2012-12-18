@@ -13,7 +13,7 @@
     launch: function() {
       var store = Ext.create('Rally.data.WsapiTreeStore', {
         rootArtifacts: ['portfolioitem/theme' ],
-        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
+        childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task'],
       });
 
       this.add(Ext.create('Rally.ui.tree.grid.Panel', {

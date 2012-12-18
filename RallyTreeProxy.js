@@ -139,7 +139,7 @@
         for (i = 0, ii = data.length; i < ii; i ++) {
           //console.log("Data processing", typeof data[i], data[i]);
 
-          data[i].data.cls = data[i].raw._type.toLowerCase();
+          data[i].data.cls = data[i].raw._type.split("/").join(" ").toLowerCase();
           this.operation.resultSet.push(data[i]);
         }
       }

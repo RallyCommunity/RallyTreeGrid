@@ -12,6 +12,7 @@
           buildParentQueryFn = options.buildParentQueryFn;
 
       delete options.canExpandFn;
+      delete options.buildParentQueryFn;
 
       options.success = function onTreeModelSuccess(model) {
         var treeModel = me.createTreeModel(model, {canExpand: canExpandFn, buildParentQueryFn: buildParentQueryFn});
@@ -85,11 +86,15 @@
 
             // Let the crappy if statement begin!!!
             if (modelType.indexOf("portfolioitem") >= 0) {
-              query = Ext.create("Rally.data.QueryFilter", {
-                property: "Parent",
-                operator: "=",
-                value: parentRef
-              });
+              if (typeof parentType !== "undefined") {
+                query = Ext.create("Rally.data.QueryFilter", {
+                  property: "Parent",
+                  operator: "=",
+                  value: parentRef
+                });
+              } else {
+                query = null;
+              }
             } else if (modelType === "hierarchicalrequirement") {
               //console.log("Create Query for Stories");
               if (parentType === modelType) {
@@ -196,21 +201,17 @@
 
         treeModel = Ext.define(baseModel.modelName + ".TreeModel", o);
 
-        //console.log("Base model");
-        //console.dir(baseModel);
-
         Ext.data.NodeInterface.decorate(treeModel);
 
         var i = 0, fields = treeModel.getFields(), ii = fields.length;
 
         for (; i < ii; i++) {
           if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
-            //console.log("Adding leaf conversion");
             fields[i].convert = function (v, rec) {
-              //console.log("Converting leaf", v, rec);
-              //console.dir(rec);
               return !rec.self.canExpandFn(rec);
+              //return false;
             };
+
           }
         }
 
