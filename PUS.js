@@ -65,7 +65,7 @@
               xtype: 'treecolumn',
               text: '',
               //dataIndex: 'FormattedID',
-              width: 100
+              width: 75
             }, {
               xtype: 'templatecolumn',
               text: 'ID',
