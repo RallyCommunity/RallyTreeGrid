@@ -1,7 +1,7 @@
 {
     "name": "TreeGrid",
     "className": "CustomApp",
-    "server": "https://demo03.rallydev.com",
+    "server": "https://demo01.rallydev.com",
     "sdk": "2.0p5",
     "javascript": [
         "RallyTreeProxy.js",

@@ -34,10 +34,20 @@
       }
   };
 
+  Ext.tree.View.prototype.getCellCls = function(record, column) {
+      return Rally.ui.grid.CellClsDecorator.getCellCls(record, column);
+  };
+
   Ext.define("Rally.ui.tree.grid.Panel", {
     extend: "Ext.tree.Panel",
 
     alias: "wiget.rallytreegrid",
+
+    mixins: {
+      messageable: "Rally.Messageable"
+    },
+
+    plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
 
     config: {
       width: "100%",
@@ -57,9 +67,34 @@
 
     },
 
-    constructor: function rally_tree_grid_ctor(config) {
-      var me = this;
+    treeColumnCfg: {
+      xtype: 'treecolumn',
+      text: 'Rank',
+      width: 75
+    },
 
+    constructor: function rally_tree_grid_ctor(config) {
+      var me = this,
+          autoGenColumns,
+          i, ii;
+
+      if (config.columnCfgs && config.models) {
+        config.columns = [me.treeColumnCfg];
+        for (i = 0, ii = config.models.length; i < ii; i++) {
+          autoGenColumns = Ext.create('Rally.ui.grid.ColumnBuilder')
+            .withDefaultColumns(config.columnCfgs)
+            .shouldAutoAddAllModelFieldsAsColumns(true)
+            .build(config.models[i].superclass);
+
+          console.log("Auto Columns", autoGenColumns);
+          config.columns = config.columns.concat(autoGenColumns);
+        }
+      }
+
+      delete config.models;
+      delete config.columCfgs;
+
+      console.log("Column Config", config.columns);
       me.callParent(arguments);
 
       console.log("Version", Ext.getVersion().version);
@@ -67,6 +102,7 @@
       me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
       me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
     },
+
 
     _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
       console.log("Can Drag Drop", arguments);
@@ -207,24 +243,36 @@
     },
 
     _doReparentTA: function _doReparentTA(parentModel, childModel) {
-      if ({hierarchicalrequirement: 1, defect: 1}.hasOwnProperty(parentModel.raw._type.toLowerCase())) {
-        childModel.set("WorkProduct", parentModel.raw._ref);
-        childModel.save();
+      if ({
+        hierarchicalrequirement: 1, 
+        defect: 1,
+        defectsuite: 1,
+        testset: 1}.hasOwnProperty(parentModel.raw._type.toLowerCase())) {
 
-        return true;
-      } else {
-        return false;
+        if (parentModel.get("Children").length === 0) {
+          childModel.set("WorkProduct", parentModel.raw._ref);
+          childModel.save();
+
+          return true;
+        }
       }
+
+      return false;
     },
 
     _doReparentDE: function _doReparentDE(parentModel, childModel) {
-      if (parentModel.raw._type.toLowerCase() !== "hierarchicalrequirement") {
-        return false;
-      } else {
+      var parentType = parentModel.raw._type.toLowerCase();
+      if (parentType === "hierarchicalrequirement") {
         childModel.set("Requirement", parentModel.raw._ref);
         childModel.save();
         return true;
+      } else if (parentType === "defectsuite") {
+        childMode.set("DefectSuite", parentModel.raw._ref);
+        childModel.save();
+        return true;
       }
+
+      return false;
     },
 
     _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {

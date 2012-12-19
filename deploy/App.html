@@ -416,7 +416,7 @@
             
                     Ext.data.NodeInterface.decorate(treeModel);
             
-                    var i = 0, fields = treeModel.getFields(), ii = fields.length;
+                    var i = 0, fields = treeModel.getFields(), ii = fields.length, ssClone;
             
                     for (; i < ii; i++) {
                       if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
@@ -424,11 +424,31 @@
                           return !rec.self.canExpandFn(rec);
                           //return false;
                         };
+                      }
             
+                      if ({ScheduleState: 1, State: 1}.hasOwnProperty(fields[i].name)) {
+                        ssClone = {};
+            
+                        ssClone.allowedValueType = null;
+                        ssClone.allowedValues = fields[i].allowedValues;
+                        ssClone.renderTpl = fields[i].renderTpl;
+            
+                        ssClone.name = "UnifiedState";
+                        ssClone.convert = function (v, rec) {
+                          if (rec.raw._type.toLowerCase() === "task") {
+                            return rec.get("State");
+                          } else if (rec.raw.hasOwnProperty("ScheduleState")) {
+                            return rec.get("ScheduleState");
+                          } else {
+                            return "";
+                          }
+                        }
                       }
                     }
             
-                    treeModel.applyField;
+                    if (ssClone) {
+                      Ext.data.NodeInterface.applyFields(treeModel, [ssClone]);
+                    }
             
                     return treeModel;
                 }
@@ -587,10 +607,20 @@
                   }
               };
             
+              Ext.tree.View.prototype.getCellCls = function(record, column) {
+                  return Rally.ui.grid.CellClsDecorator.getCellCls(record, column);
+              };
+            
               Ext.define("Rally.ui.tree.grid.Panel", {
                 extend: "Ext.tree.Panel",
             
                 alias: "wiget.rallytreegrid",
+            
+                mixins: {
+                  messageable: "Rally.Messageable"
+                },
+            
+                plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
             
                 config: {
                   width: "100%",
@@ -610,9 +640,34 @@
             
                 },
             
-                constructor: function rally_tree_grid_ctor(config) {
-                  var me = this;
+                treeColumnCfg: {
+                  xtype: 'treecolumn',
+                  text: 'Rank',
+                  width: 75
+                },
             
+                constructor: function rally_tree_grid_ctor(config) {
+                  var me = this,
+                      autoGenColumns,
+                      i, ii;
+            
+                  if (config.columnCfgs && config.models) {
+                    config.columns = [me.treeColumnCfg];
+                    for (i = 0, ii = config.models.length; i < ii; i++) {
+                      autoGenColumns = Ext.create('Rally.ui.grid.ColumnBuilder')
+                        .withDefaultColumns(config.columnCfgs)
+                        .shouldAutoAddAllModelFieldsAsColumns(true)
+                        .build(config.models[i].superclass);
+            
+                      console.log("Auto Columns", autoGenColumns);
+                      config.columns = config.columns.concat(autoGenColumns);
+                    }
+                  }
+            
+                  delete config.models;
+                  delete config.columCfgs;
+            
+                  console.log("Column Config", config.columns);
                   me.callParent(arguments);
             
                   console.log("Version", Ext.getVersion().version);
@@ -620,6 +675,7 @@
                   me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
                   me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
                 },
+            
             
                 _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
                   console.log("Can Drag Drop", arguments);
@@ -760,24 +816,36 @@
                 },
             
                 _doReparentTA: function _doReparentTA(parentModel, childModel) {
-                  if ({hierarchicalrequirement: 1, defect: 1}.hasOwnProperty(parentModel.raw._type.toLowerCase())) {
-                    childModel.set("WorkProduct", parentModel.raw._ref);
-                    childModel.save();
+                  if ({
+                    hierarchicalrequirement: 1, 
+                    defect: 1,
+                    defectsuite: 1,
+                    testset: 1}.hasOwnProperty(parentModel.raw._type.toLowerCase())) {
             
-                    return true;
-                  } else {
-                    return false;
+                    if (parentModel.get("Children").length === 0) {
+                      childModel.set("WorkProduct", parentModel.raw._ref);
+                      childModel.save();
+            
+                      return true;
+                    }
                   }
+            
+                  return false;
                 },
             
                 _doReparentDE: function _doReparentDE(parentModel, childModel) {
-                  if (parentModel.raw._type.toLowerCase() !== "hierarchicalrequirement") {
-                    return false;
-                  } else {
+                  var parentType = parentModel.raw._type.toLowerCase();
+                  if (parentType === "hierarchicalrequirement") {
                     childModel.set("Requirement", parentModel.raw._ref);
                     childModel.save();
                     return true;
+                  } else if (parentType === "defectsuite") {
+                    childMode.set("DefectSuite", parentModel.raw._ref);
+                    childModel.save();
+                    return true;
                   }
+            
+                  return false;
                 },
             
                 _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
@@ -926,58 +994,34 @@
             
                   Rally.data.TreeModelFactory.getModel({
                     type: "HierarchicalRequirement",
-                    success: function (model) {
+                    success: function modelSuccess(model) {
                       var ssf, i, ii, f = model.getFields();
             
                       console.log("Fields", f);
                       for (i = 0, ii = f.length; i < ii; i++) {
-                        if (f[i].name === "ScheduleState") {
+                        if (f[i].name === "UnifiedState") {
                           ssf = f[i];
                           break;
                         }
                       }
             
                       console.log("Found SSF?", ssf);
+                      console.log("Model");
+                      console.dir(model);
                       me.add(Ext.create('Rally.ui.tree.grid.Panel', {
                         store: store,
+                        models: [model],
                         dockedItems: [{
                           xtype: 'rallypagingtoolbar',
                           store: store,   // same store TreeGridPanel is using
                           dock: 'bottom',
                           displayInfo: true
                         }],
-                        columns: [{
-                          xtype: 'treecolumn',
-                          text: '',
-                          //dataIndex: 'FormattedID',
-                          width: 100
-                        }, {
-                          xtype: 'templatecolumn',
-                          text: 'ID',
-                          dataIndex: 'FormattedID',
-                          tpl: Ext.create("Rally.ui.renderer.template.FormattedIDTemplate"),
-                          flex: 1
-                        }, {
-                          text: 'Name',
-                          dataIndex: 'Name',
-                          flex: 4
-                        }, {
-                          text: 'Release',
-                          dataIndex: 'Release',
-                          renderer: renderComplex,
-                          flex: 2
-                        }, {
-                          text: 'Iteration',
-                          dataIndex: 'Iteration',
-                          renderer: renderComplex,
-                          flex: 2
-                        }, {
-                          xtype: 'templatecolumn',
-                          tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
-                          text: 'State',
-                          dataIndex: 'ScheduleState',
-                          flex: 2
-                        }, {
+                        columnCfgs: [
+                          "FormattedID",
+                          "Name",
+                          "ScheduleState",
+                          {
                           text: 'Task Est.',
                           dataIndex: 'Estimate',
                           renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
@@ -987,17 +1031,61 @@
                           dataIndex: 'ToDo',
                           renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
                           flex: 1
-                        }, {
-                          text: 'Owner',
-                          dataIndex: 'Owner',
-                          renderer: renderComplex,
-                          flex: 2
-                        }, {
-                          text: 'Project',
-                          dataIndex: 'Project',
-                          renderer: renderComplex,
-                          flex: 2
-                        }]
+                        }
+                        ]
+            
+                        //columns: [{
+                          //xtype: 'treecolumn',
+                          //text: '',
+                          ////dataIndex: 'FormattedID',
+                          //width: 75
+                        //}, {
+                          //xtype: 'templatecolumn',
+                          //text: 'ID',
+                          //dataIndex: 'FormattedID',
+                          //tpl: Ext.create("Rally.ui.renderer.template.FormattedIDTemplate"),
+                          //flex: 1
+                        //}, {
+                          //text: 'Name',
+                          //dataIndex: 'Name',
+                          //flex: 4
+                        //}, {
+                          //text: 'Release',
+                          //dataIndex: 'Release',
+                          //renderer: renderComplex,
+                          //flex: 2
+                        //}, {
+                          //text: 'Iteration',
+                          //dataIndex: 'Iteration',
+                          //renderer: renderComplex,
+                          //flex: 2
+                        //}, {
+                          //xtype: 'templatecolumn',
+                          //tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
+                          //text: 'State',
+                          //dataIndex: 'ScheduleState',
+                          //flex: 2
+                        //}, {
+                          //text: 'Task Est.',
+                          //dataIndex: 'Estimate',
+                          //renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
+                          //flex: 1
+                        //}, {
+                          //text: 'To Do',
+                          //dataIndex: 'ToDo',
+                          //renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
+                          //flex: 1
+                        //}, {
+                          //text: 'Owner',
+                          //dataIndex: 'Owner',
+                          //renderer: renderComplex,
+                          //flex: 2
+                        //}, {
+                          //text: 'Project',
+                          //dataIndex: 'Project',
+                          //renderer: renderComplex,
+                          //flex: 2
+                        //}]
                       }));
             
                       }

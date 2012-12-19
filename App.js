@@ -41,58 +41,34 @@
 
       Rally.data.TreeModelFactory.getModel({
         type: "HierarchicalRequirement",
-        success: function (model) {
+        success: function modelSuccess(model) {
           var ssf, i, ii, f = model.getFields();
 
           console.log("Fields", f);
           for (i = 0, ii = f.length; i < ii; i++) {
-            if (f[i].name === "ScheduleState") {
+            if (f[i].name === "UnifiedState") {
               ssf = f[i];
               break;
             }
           }
 
           console.log("Found SSF?", ssf);
+          console.log("Model");
+          console.dir(model);
           me.add(Ext.create('Rally.ui.tree.grid.Panel', {
             store: store,
+            models: [model],
             dockedItems: [{
               xtype: 'rallypagingtoolbar',
               store: store,   // same store TreeGridPanel is using
               dock: 'bottom',
               displayInfo: true
             }],
-            columns: [{
-              xtype: 'treecolumn',
-              text: '',
-              //dataIndex: 'FormattedID',
-              width: 100
-            }, {
-              xtype: 'templatecolumn',
-              text: 'ID',
-              dataIndex: 'FormattedID',
-              tpl: Ext.create("Rally.ui.renderer.template.FormattedIDTemplate"),
-              flex: 1
-            }, {
-              text: 'Name',
-              dataIndex: 'Name',
-              flex: 4
-            }, {
-              text: 'Release',
-              dataIndex: 'Release',
-              renderer: renderComplex,
-              flex: 2
-            }, {
-              text: 'Iteration',
-              dataIndex: 'Iteration',
-              renderer: renderComplex,
-              flex: 2
-            }, {
-              xtype: 'templatecolumn',
-              tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
-              text: 'State',
-              dataIndex: 'ScheduleState',
-              flex: 2
-            }, {
+            columnCfgs: [
+              "FormattedID",
+              "Name",
+              "ScheduleState",
+              {
               text: 'Task Est.',
               dataIndex: 'Estimate',
               renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
@@ -102,17 +78,61 @@
               dataIndex: 'ToDo',
               renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
               flex: 1
-            }, {
-              text: 'Owner',
-              dataIndex: 'Owner',
-              renderer: renderComplex,
-              flex: 2
-            }, {
-              text: 'Project',
-              dataIndex: 'Project',
-              renderer: renderComplex,
-              flex: 2
-            }]
+            }
+            ]
+
+            //columns: [{
+              //xtype: 'treecolumn',
+              //text: '',
+              ////dataIndex: 'FormattedID',
+              //width: 75
+            //}, {
+              //xtype: 'templatecolumn',
+              //text: 'ID',
+              //dataIndex: 'FormattedID',
+              //tpl: Ext.create("Rally.ui.renderer.template.FormattedIDTemplate"),
+              //flex: 1
+            //}, {
+              //text: 'Name',
+              //dataIndex: 'Name',
+              //flex: 4
+            //}, {
+              //text: 'Release',
+              //dataIndex: 'Release',
+              //renderer: renderComplex,
+              //flex: 2
+            //}, {
+              //text: 'Iteration',
+              //dataIndex: 'Iteration',
+              //renderer: renderComplex,
+              //flex: 2
+            //}, {
+              //xtype: 'templatecolumn',
+              //tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
+              //text: 'State',
+              //dataIndex: 'ScheduleState',
+              //flex: 2
+            //}, {
+              //text: 'Task Est.',
+              //dataIndex: 'Estimate',
+              //renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
+              //flex: 1
+            //}, {
+              //text: 'To Do',
+              //dataIndex: 'ToDo',
+              //renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
+              //flex: 1
+            //}, {
+              //text: 'Owner',
+              //dataIndex: 'Owner',
+              //renderer: renderComplex,
+              //flex: 2
+            //}, {
+              //text: 'Project',
+              //dataIndex: 'Project',
+              //renderer: renderComplex,
+              //flex: 2
+            //}]
           }));
 
           }

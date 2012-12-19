@@ -203,7 +203,7 @@
 
         Ext.data.NodeInterface.decorate(treeModel);
 
-        var i = 0, fields = treeModel.getFields(), ii = fields.length;
+        var i = 0, fields = treeModel.getFields(), ii = fields.length, ssClone;
 
         for (; i < ii; i++) {
           if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
@@ -211,11 +211,31 @@
               return !rec.self.canExpandFn(rec);
               //return false;
             };
+          }
 
+          if ({ScheduleState: 1, State: 1}.hasOwnProperty(fields[i].name)) {
+            ssClone = {};
+
+            ssClone.allowedValueType = null;
+            ssClone.allowedValues = fields[i].allowedValues;
+            ssClone.renderTpl = fields[i].renderTpl;
+
+            ssClone.name = "UnifiedState";
+            ssClone.convert = function (v, rec) {
+              if (rec.raw._type.toLowerCase() === "task") {
+                return rec.get("State");
+              } else if (rec.raw.hasOwnProperty("ScheduleState")) {
+                return rec.get("ScheduleState");
+              } else {
+                return "";
+              }
+            }
           }
         }
 
-        treeModel.applyField;
+        if (ssClone) {
+          Ext.data.NodeInterface.applyFields(treeModel, [ssClone]);
+        }
 
         return treeModel;
     }
