@@ -37,7 +37,7 @@
     _readRoot: function _readRoot(operation, callback, scope) {
       var loadedArtifacts = {},
           me = this,
-          processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+          processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
           i= 0, ii = me.rootArtifacts.length;
 
       //console.log("Reading Root");
@@ -45,11 +45,17 @@
       for (; i < ii; i++) {
         loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
 
-        (function iHateJS(type) {
+        (function iHateJsScoping(type) {
           Rally.data.TreeModelFactory.getModel({
             type: type,
             canExpandFn: me.canExpandFn,
             success: function onSuccess(model) {
+              var query = model.buildParentQueryFn(model, null);
+
+              if (me.wsapiStoreOptions.query) {
+                query = query.and(me.wsapiStoreOptions.query);
+              }
+
               var wsapi = Ext.create("Rally.data.WsapiDataStore", {
                 autoLoad: false,
                 model: model,
@@ -59,7 +65,7 @@
                 start: me.wsapiStoreOptions.start,
                 limit: me.wsapiStoreOptions.limit,
                 isPaging: me.wsapiStoreOptions.isPaging,
-                filters: model.buildParentQueryFn(model, null),
+                filters: query,
                 sorters: [{
                   property: "Rank",
                   direction: "ASC"
@@ -81,7 +87,7 @@
     _readChildren: function _readChildren(operation, callback, scope) {
       var loadedArtifacts = {},
           me = this,
-          processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+          processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
           i= 0, ii = me.childArtifacts.length;
 
       //console.log("Reading Children");
@@ -90,7 +96,7 @@
         //console.log("Fetching children of type", me.childArtifacts[i], i, ii);
         loadedArtifacts[me.childArtifacts[i].toLowerCase()] = 0;
 
-        (function iHateJS(type) {
+        (function iHateJsScoping(type) {
           Rally.data.TreeModelFactory.getModel({
             canExpandFn: me.canExpandFn,
             type: type,
@@ -139,8 +145,10 @@
         for (i = 0, ii = data.length; i < ii; i ++) {
           //console.log("Data processing", typeof data[i], data[i]);
 
-          data[i].data.cls = data[i].raw._type.split("/").join(" ").toLowerCase();
-          this.operation.resultSet.push(data[i]);
+          data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
+          if (this.filterFn(data[i])) {
+            this.operation.resultSet.push(data[i]);
+          }
         }
       }
 

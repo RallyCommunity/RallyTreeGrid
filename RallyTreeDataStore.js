@@ -14,6 +14,8 @@
 
     currentPage: 1,
 
+    filterFn: function defaultFilterFn() { return true; },
+
     constructor: function wsapi_tree_store_ctor(config) {
       var me = this,
           trmConfig = {};
@@ -57,7 +59,8 @@
         page: me.currentPage,
         start: (me.currentPage - 1) * me.pageSize,
         limit: me.pageSize,
-        isPaging: true
+        isPaging: true,
+        query: me.query
       };
 
       //console.log("Tree Store Load Options");
@@ -79,6 +82,7 @@
         childArtifacts: me.childArtifacts,
         isRoot: me.getRootNode().modelName === options.node.modelName,
         canExpandFn: me.canExpandFn,
+        filterFn: me.filterFn,
         wsapiStoreOptions: options.wsapi
       }));
 
