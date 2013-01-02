@@ -6,6 +6,10 @@
     }
   });
 
+  var defaultFilterFn = function () { return true; };
+
+  var lbapiFilterFn = function (rec) { return this.inscope[rec.data.ObjectID] || this.items[rec.data.ObjectID]; };
+
   var renderTask = function renderTask(p, val, __, rec) {
     if (rec && rec.get) {
       if (rec.raw._type.toLowerCase() !== "task") {
@@ -27,6 +31,8 @@
       task: false,
       testcase: false
     },
+
+    filterFn: defaultFilterFn,
 
     launch: function() {
       var me = this;
@@ -214,7 +220,8 @@
             me.store = Ext.create('Rally.data.WsapiTreeStore', {
               rootArtifacts: ['hierarchicalrequirement' ],
               childArtifacts: childArtifacts,
-              query: query
+              query: query,
+              filterFn: me.filterFn
             })
 
             me._onLoadData(newVal);
@@ -238,6 +245,8 @@
             for (i = 1, ii = newVal.wsapi.length; i < ii; i++) {
               query = query.and(Ext.create("Rally.data.QueryFilter", newVal.wsapi[i]));
             }
+
+            me.filterFn = defaultFilterFn;
 
             doLoad(query, childArtifacts);
           } else if (newVal.lbapi) {
@@ -275,6 +284,8 @@
                   }
                 }
               }
+
+              me.filterFn = Ext.bind(lbapiFilterFn, {inscope: inscope, items: items});
 
               doLoad(query, childArtifacts);
             });
