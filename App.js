@@ -2,13 +2,19 @@
 
   Ext.override(Rally.env.Server, {
     getWsapiUrl: function(version) {
-      return this.getContextUrl() + "/webservice/1.40";
+      return this.getContextUrl() + "/webservice/1.39";
     }
   });
 
   var defaultFilterFn = function () { return true; };
 
-  var lbapiFilterFn = function (rec) { return this.inscope[rec.data.ObjectID] || this.items[rec.data.ObjectID]; };
+  var lbapiFilterFn = function (rec) { 
+    if (rec.data._type.toLowerCase() === "hierarchicalrequirement") {
+      return this.inscope[rec.data.ObjectID] || this.items[rec.data.ObjectID]; 
+    } else {
+      return true;
+    }
+  };
 
   var renderTask = function renderTask(p, val, __, rec) {
     if (rec && rec.get) {
@@ -32,10 +38,21 @@
       testcase: false
     },
 
+    mixins: {
+      maskable: "Rally.ui.mask.Maskable"
+    },
+
+    loading: null,
+
     filterFn: defaultFilterFn,
 
     launch: function() {
       var me = this;
+
+      //me.loading = new Ext.LoadMask(me.up("dashboard-container"), {msg: "Loading..."});
+      me.maskTarget = Ext.get("#dashboard-container");
+
+      me.showLoading();
 
       me.add(Ext.create("Ext.Panel", {
         border: false,
@@ -51,7 +68,7 @@
               me._createViewSelector(),
               {
                 xtype: 'tbspacer',
-                flex: 1
+                width: 200
               },
               me._createTypeChoices()
             ]
@@ -60,6 +77,18 @@
 
       //me.add(me._createTypeChoices());
 
+    },
+
+    showLoading: function() {
+      var me = this;
+
+      me.showMask("Loading...");
+    },
+
+    hideLoading: function() {
+      var me = this;
+
+      me.hideMask();
     },
 
     _createViewSelector: function _createViewSelector() {
@@ -91,12 +120,77 @@
       });
 
       data.push({
+        name: "Has Test Cases", 
+        value: {
+          lbapi: {
+            find: {
+              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "SOME_RUN_ALL_PASSING", "ALL_RUN_NONE_PASSING", "ALL_RUN_ALL_PASSING"] }
+            },
+            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          }
+        }
+      });
+
+      data.push({
+        name: "No Test Cases", 
+        value: {
+          lbapi: {
+            find: {
+              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              TestCaseStatus: "NONE"
+            },
+            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          }
+        }
+      });
+
+      data.push({
+        name: "All Test Cases Passing", 
+        value: {
+          lbapi: {
+            find: {
+              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              TestCaseStatus: { $in: ["ALL_RUN_ALL_PASSING"] }
+            },
+            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          }
+        }
+      });
+
+      data.push({
+        name: "Test Cases Not Passing", 
+        value: {
+          lbapi: {
+            find: {
+              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "ALL_RUN_NONE_PASSING"] }
+            },
+            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          }
+        }
+      });
+
+      data.push({
         name: "Has Active Defects", 
         value: {
           lbapi: {
             find: {
-              _TypeHierarchy: "HierarchicalRequirement",
+              _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
               DefectStatus: { $in: ["NONE_CLOSED", "SOME_CLOSED"] }
+            },
+            fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
+          }
+        }
+      });
+
+      data.push({
+        name: "No Active Defects", 
+        value: {
+          lbapi: {
+            find: {
+              _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
+              DefectStatus: { $in: ["NONE"] }
             },
             fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
           }
@@ -110,6 +204,7 @@
 
       var cb = Ext.create("Ext.form.field.ComboBox", {
         fieldLabel: "Views",
+        margin: "0 5 0 0",
         autoSelect: true,
         editable: false,
         forceSelection: true,
@@ -177,6 +272,8 @@
           projects = "__PROJECT_OIDS_IN_SCOPE__".split(',');
           woid = me.getContext().getWorkspace().ObjectID;
 
+      me.showLoading();
+
       for (i = 0, ii = projects.length; i < ii; i++) {
         projects[i] = parseInt(projects[i], 10);
       }
@@ -204,6 +301,8 @@
 
     _applyFilter: function _applyFilter(sender, newVal, oldVal, eOpts) {
       var me = this;
+
+      me.showLoading();
 
       if (this._treePanel) {
         this.remove(this._treePanel);
@@ -338,6 +437,7 @@
 
       });
 
+      me._treePanel.on("load", function() { me.hideLoading(); });
       me.add(me._treePanel);
     }
   });

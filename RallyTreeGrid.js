@@ -70,7 +70,7 @@
     treeColumnCfg: {
       xtype: 'treecolumn',
       text: 'Rank',
-      width: 75
+      width: 100
     },
 
     constructor: function rally_tree_grid_ctor(config) {

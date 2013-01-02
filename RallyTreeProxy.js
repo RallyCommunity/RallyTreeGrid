@@ -46,6 +46,11 @@
         loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
 
         (function iHateJsScoping(type) {
+          var sorter = [{
+            property: "Rank",
+            direction: "ASC"
+          }];
+
           Rally.data.TreeModelFactory.getModel({
             type: type,
             canExpandFn: me.canExpandFn,
@@ -66,10 +71,7 @@
                 limit: me.wsapiStoreOptions.limit,
                 isPaging: me.wsapiStoreOptions.isPaging,
                 filters: query,
-                sorters: [{
-                  property: "Rank",
-                  direction: "ASC"
-                }],
+                sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
                 listeners: {
                   load: function loaded(store, data, success) {
                     processCB(store, data, type);
@@ -97,6 +99,11 @@
         loadedArtifacts[me.childArtifacts[i].toLowerCase()] = 0;
 
         (function iHateJsScoping(type) {
+          var sorter = [{
+            property: "Rank",
+            direction: "ASC"
+          }];
+
           Rally.data.TreeModelFactory.getModel({
             canExpandFn: me.canExpandFn,
             type: type,
@@ -104,10 +111,7 @@
               Ext.create("Rally.data.WsapiDataStore", {
                 autoLoad: true,
                 filters: model.buildParentQueryFn(model, operation.node),
-                sorters: [{
-                  property: "Rank",
-                  direction: "ASC"
-                }],
+                sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
                 model: model,
                 listeners: {
                   load: function loaded(store, data, success) {
