@@ -150,6 +150,9 @@
           //console.log("Data processing", typeof data[i], data[i]);
 
           data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
+          data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
+          data[i].data.hrefTarget = "_top";
+
           if (this.filterFn(data[i])) {
             this.operation.resultSet.push(data[i]);
           }

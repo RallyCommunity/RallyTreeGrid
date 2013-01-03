@@ -69,8 +69,9 @@
 
     treeColumnCfg: {
       xtype: 'treecolumn',
-      text: 'Rank',
-      width: 100
+      text: 'ID',
+      dataIndex: 'FormattedID',
+      flex: 1
     },
 
     constructor: function rally_tree_grid_ctor(config) {
@@ -232,7 +233,7 @@
 
         childModel.set("PortfolioItem", parentModel.raw._ref);
         childModel.save();
-      } else if (parentTypeName !== "hierarchicalrequirement") {
+      } else if (parentTypeName === "hierarchicalrequirement") {
         childModel.set("Parent", parentModel.raw._ref);
         childModel.save();
       } else {

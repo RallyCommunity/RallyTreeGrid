@@ -50,29 +50,38 @@
       var me = this;
 
       //me.loading = new Ext.LoadMask(me.up("dashboard-container"), {msg: "Loading..."});
-      me.maskTarget = Ext.get("#dashboard-container");
+      me.maskTarget = me.el;
 
       me.showLoading();
 
       me.add(Ext.create("Ext.Panel", {
         border: false,
-        layout: 'fit',
+        layout: 'anchor',
+        margin: '15 0 0 0',
+        padding: '0 0 0 25',
+        height: 45,
         width: '100%',
         items: [
+          //{
+            //anchor: '100% 45',
+            //items: [
           {
-            xtype: 'panel',
             width: '100%',
+            anchor: '100% 45',
+            //height: 35,
             border: false,
             layout: 'hbox',
             items: [
               me._createViewSelector(),
               {
                 xtype: 'tbspacer',
-                width: 200
+                flex: 1
+                //width: 200
               },
               me._createTypeChoices()
             ]
-        }]
+        //}]
+            }]
       }));
 
       //me.add(me._createTypeChoices());
@@ -120,7 +129,7 @@
       });
 
       data.push({
-        name: "Has Test Cases", 
+        name: "Has Test Cases (LB)", 
         value: {
           lbapi: {
             find: {
@@ -133,7 +142,7 @@
       });
 
       data.push({
-        name: "No Test Cases", 
+        name: "No Test Cases (LB)", 
         value: {
           lbapi: {
             find: {
@@ -146,7 +155,7 @@
       });
 
       data.push({
-        name: "All Test Cases Passing", 
+        name: "All Test Cases Passing (LB)", 
         value: {
           lbapi: {
             find: {
@@ -159,7 +168,7 @@
       });
 
       data.push({
-        name: "Test Cases Not Passing", 
+        name: "Test Cases Not Passing (LB)", 
         value: {
           lbapi: {
             find: {
@@ -172,7 +181,7 @@
       });
 
       data.push({
-        name: "Has Active Defects", 
+        name: "Has Active Defects (LB)", 
         value: {
           lbapi: {
             find: {
@@ -185,7 +194,7 @@
       });
 
       data.push({
-        name: "No Active Defects", 
+        name: "No Active Defects (LB)", 
         value: {
           lbapi: {
             find: {
@@ -284,7 +293,7 @@
 
 
       Ext.Ajax.request({
-        url: "https://rally1.rallydev.com/analytics/v2.0/service/rally/workspace/" + woid + "/artifact/snapshot/query.js",
+        url: "/analytics/v2.0/service/rally/workspace/" + woid + "/artifact/snapshot/query.js",
         method: "POST",
         jsonData: query,
         headers: { 
@@ -416,23 +425,36 @@
           xtype: 'rallypagingtoolbar',
           store: me.store,   // same store TreeGridPanel is using
           dock: 'bottom',
-          displayInfo: true
+          displayInfo: true,
+          listeners: {
+            beforechange: function () {
+              this.showLoading();
+            },
+            scope: me
+          }
         }],
+        listeners: {
+          load: function() { me.hideLoading(); },
+        },
         columnCfgs: [
-          "FormattedID",
           "Name",
+          "Release",
+          "Iteration",
           "ScheduleState",
+          "PlanEstimate",
           {
             text: 'Task Est.',
             dataIndex: 'Estimate',
             renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
             flex: 1
-          }, {
+          },
+          {
             text: 'To Do',
             dataIndex: 'ToDo',
             renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
             flex: 1
-          }
+          },
+          "Owner"
         ]
 
       });

@@ -65,26 +65,25 @@
               displayInfo: true
             }],
             columnCfgs: [
-              "FormattedID",
               "Name",
-              "ScheduleState",
+              {
+                xtype: 'templatecolumn',
+                tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
+                text: 'State',
+                flex: 2
+              },
               {
                 text: 'Task Est.',
                 dataIndex: 'Estimate',
                 renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
                 flex: 1
-              }, {
+              },
+              {
                 text: 'To Do',
                 dataIndex: 'ToDo',
                 renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
                 flex: 1
               }
-              //, {
-                //xtype: 'templatecolumn',
-                //tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate', {field: ssf}),
-                //text: 'State',
-                //flex: 2
-              //}
             ]
 
             }));
