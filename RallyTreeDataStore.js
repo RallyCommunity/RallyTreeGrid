@@ -4,8 +4,8 @@
   Ext.define("Rally.data.WsapiTreeStore", {
     extend: "Ext.data.TreeStore",
 
-    rootArtifacts: ["HierarchicalRequirement", "Defect"],
-    childArtifacts: ["HierarchicalRequirement", "Task"],
+    topLevelModels: ["HierarchicalRequirement"],
+    childModels: ["HierarchicalRequirement", "Task"],
 
     pageSize: 25,
 
@@ -25,15 +25,15 @@
 
       me.callParent([config]);
 
-      //console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
+      //console.log("WsapiTreeStore Root Artifacts", me.topLevelModels);
 
       me.setRootNode(Ext.create("Rally.data.TreeRootModel", {
-        rootArtifacts: me.rootArtifacts,
+        topLevelModels: me.topLevelModels,
         leaf: false
       }));
 
       //me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
-        //rootArtifact: me.rootArtifacts,
+        //topLevelModels: me.topLevelModels,
         //childArtifacts: me.childArtifacts
       //});
 
@@ -78,7 +78,7 @@
 
       me.setProxy(Ext.create("Rally.data.WsapiTreeProxy", {
         model: options.node,
-        rootArtifacts: me.rootArtifacts,
+        topLevelModels: me.topLevelModels,
         childArtifacts: me.childArtifacts,
         isRoot: me.getRootNode().modelName === options.node.modelName,
         canExpandFn: me.canExpandFn,

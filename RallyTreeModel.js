@@ -12,14 +12,14 @@
           o = {};
 
       Ext.apply(o, {
-        rootArtifacts: ["HierarchicalRequirement", "Defect"]
+        topLevelModels: ["HierarchicalRequirement"]
       });
       Ext.apply(o, options);
 
       //console.log("TreeRootModel", o, options);
 
       me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
-        rootArtifacts: o.rootArtifacts,
+        topLevelModels: o.topLevelModels,
         isRoot: true
       });
 

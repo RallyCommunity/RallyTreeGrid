@@ -4,7 +4,7 @@
 
     extend: "Rally.data.WsapiRestProxy",
 
-    rootArtifacts: null, //["HierarchicalRequirement"],
+    topLevelModels: null, //["HierarchicalRequirement"],
     childArtifacts: null, //["HierarchicalRequirement"],
     isRoot: false,
     model: null,
@@ -18,7 +18,7 @@
         totalProperty: "TotalResultCount"
       });
 
-      //console.log("For Artifacts", me.rootArtifacts, me.childArtifacts);
+      //console.log("For Artifacts", me.topLevelModels, me.childArtifacts);
       //debugger;
     },
 
@@ -38,12 +38,12 @@
       var loadedArtifacts = {},
           me = this,
           processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
-          i= 0, ii = me.rootArtifacts.length;
+          i= 0, ii = me.topLevelModels.length;
 
       //console.log("Reading Root");
 
       for (; i < ii; i++) {
-        loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
+        loadedArtifacts[me.topLevelModels[i].toLowerCase()] = 0;
 
         (function iHateJsScoping(type) {
           var sorter = [{
@@ -82,7 +82,7 @@
               wsapi.loadPage(me.wsapiStoreOptions.page);
             }
           });
-        }(me.rootArtifacts[i].toLowerCase()));
+        }(me.topLevelModels[i].toLowerCase()));
       }
     },
 

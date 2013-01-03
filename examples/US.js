@@ -34,7 +34,7 @@
 
     launch: function() {
       var store = Ext.create('Rally.data.WsapiTreeStore', {
-        rootArtifacts: ['hierarchicalrequirement' ],
+        topLevelModels: ['hierarchicalrequirement' ],
         childArtifacts: ['hierarchicalrequirement', 'task'],
       }),
       me = this;

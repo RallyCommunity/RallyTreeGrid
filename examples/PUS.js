@@ -326,7 +326,7 @@
 
           var doLoad = function(query, childArtifacts) {
             me.store = Ext.create('Rally.data.WsapiTreeStore', {
-              rootArtifacts: ['hierarchicalrequirement' ],
+              topLevelModels: ['hierarchicalrequirement' ],
               childArtifacts: childArtifacts,
               query: query,
               filterFn: me.filterFn
