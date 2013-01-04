@@ -46,7 +46,7 @@
                 _readRoot: function _readRoot(operation, callback, scope) {
                   var loadedArtifacts = {},
                       me = this,
-                      processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+                      processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
                       i= 0, ii = me.rootArtifacts.length;
             
                   //console.log("Reading Root");
@@ -54,11 +54,22 @@
                   for (; i < ii; i++) {
                     loadedArtifacts[me.rootArtifacts[i].toLowerCase()] = 0;
             
-                    (function iHateJS(type) {
+                    (function iHateJsScoping(type) {
+                      var sorter = [{
+                        property: "Rank",
+                        direction: "ASC"
+                      }];
+            
                       Rally.data.TreeModelFactory.getModel({
                         type: type,
                         canExpandFn: me.canExpandFn,
                         success: function onSuccess(model) {
+                          var query = model.buildParentQueryFn(model, null);
+            
+                          if (me.wsapiStoreOptions.query) {
+                            query = query.and(me.wsapiStoreOptions.query);
+                          }
+            
                           var wsapi = Ext.create("Rally.data.WsapiDataStore", {
                             autoLoad: false,
                             model: model,
@@ -68,11 +79,8 @@
                             start: me.wsapiStoreOptions.start,
                             limit: me.wsapiStoreOptions.limit,
                             isPaging: me.wsapiStoreOptions.isPaging,
-                            filters: model.buildParentQueryFn(model, null),
-                            sorters: [{
-                              property: "Rank",
-                              direction: "ASC"
-                            }],
+                            filters: query,
+                            sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
                             listeners: {
                               load: function loaded(store, data, success) {
                                 processCB(store, data, type);
@@ -90,7 +98,7 @@
                 _readChildren: function _readChildren(operation, callback, scope) {
                   var loadedArtifacts = {},
                       me = this,
-                      processCB = Ext.bind(this._processResults, {loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+                      processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
                       i= 0, ii = me.childArtifacts.length;
             
                   //console.log("Reading Children");
@@ -99,7 +107,12 @@
                     //console.log("Fetching children of type", me.childArtifacts[i], i, ii);
                     loadedArtifacts[me.childArtifacts[i].toLowerCase()] = 0;
             
-                    (function iHateJS(type) {
+                    (function iHateJsScoping(type) {
+                      var sorter = [{
+                        property: "Rank",
+                        direction: "ASC"
+                      }];
+            
                       Rally.data.TreeModelFactory.getModel({
                         canExpandFn: me.canExpandFn,
                         type: type,
@@ -107,10 +120,7 @@
                           Ext.create("Rally.data.WsapiDataStore", {
                             autoLoad: true,
                             filters: model.buildParentQueryFn(model, operation.node),
-                            sorters: [{
-                              property: "Rank",
-                              direction: "ASC"
-                            }],
+                            sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
                             model: model,
                             listeners: {
                               load: function loaded(store, data, success) {
@@ -148,8 +158,13 @@
                     for (i = 0, ii = data.length; i < ii; i ++) {
                       //console.log("Data processing", typeof data[i], data[i]);
             
-                      data[i].data.cls = data[i].raw._type.toLowerCase();
-                      this.operation.resultSet.push(data[i]);
+                      data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
+                      data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
+                      data[i].data.hrefTarget = "_top";
+            
+                      if (this.filterFn(data[i])) {
+                        this.operation.resultSet.push(data[i]);
+                      }
                     }
                   }
             
@@ -225,6 +240,7 @@
                       buildParentQueryFn = options.buildParentQueryFn;
             
                   delete options.canExpandFn;
+                  delete options.buildParentQueryFn;
             
                   options.success = function onTreeModelSuccess(model) {
                     var treeModel = me.createTreeModel(model, {canExpand: canExpandFn, buildParentQueryFn: buildParentQueryFn});
@@ -298,11 +314,15 @@
             
                         // Let the crappy if statement begin!!!
                         if (modelType.indexOf("portfolioitem") >= 0) {
-                          query = Ext.create("Rally.data.QueryFilter", {
-                            property: "Parent",
-                            operator: "=",
-                            value: parentRef
-                          });
+                          if (typeof parentType !== "undefined") {
+                            query = Ext.create("Rally.data.QueryFilter", {
+                              property: "Parent",
+                              operator: "=",
+                              value: parentRef
+                            });
+                          } else {
+                            query = null;
+                          }
                         } else if (modelType === "hierarchicalrequirement") {
                           //console.log("Create Query for Stories");
                           if (parentType === modelType) {
@@ -409,25 +429,41 @@
             
                     treeModel = Ext.define(baseModel.modelName + ".TreeModel", o);
             
-                    //console.log("Base model");
-                    //console.dir(baseModel);
-            
                     Ext.data.NodeInterface.decorate(treeModel);
             
-                    var i = 0, fields = treeModel.getFields(), ii = fields.length;
+                    var i = 0, fields = treeModel.getFields(), ii = fields.length, ssClone;
             
                     for (; i < ii; i++) {
                       if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
-                        //console.log("Adding leaf conversion");
                         fields[i].convert = function (v, rec) {
-                          //console.log("Converting leaf", v, rec);
-                          //console.dir(rec);
                           return !rec.self.canExpandFn(rec);
+                          //return false;
                         };
+                      }
+            
+                      if ({ScheduleState: 1, State: 1}.hasOwnProperty(fields[i].name)) {
+                        ssClone = {};
+            
+                        ssClone.allowedValueType = null;
+                        ssClone.allowedValues = fields[i].allowedValues;
+                        ssClone.renderTpl = fields[i].renderTpl;
+            
+                        ssClone.name = "UnifiedState";
+                        ssClone.convert = function (v, rec) {
+                          if (rec.raw._type.toLowerCase() === "task") {
+                            return rec.get("State");
+                          } else if (rec.raw.hasOwnProperty("ScheduleState")) {
+                            return rec.get("ScheduleState");
+                          } else {
+                            return "";
+                          }
+                        }
                       }
                     }
             
-                    treeModel.applyField;
+                    if (ssClone) {
+                      Ext.data.NodeInterface.applyFields(treeModel, [ssClone]);
+                    }
             
                     return treeModel;
                 }
@@ -449,6 +485,8 @@
                 totalCount: 0,
             
                 currentPage: 1,
+            
+                filterFn: function defaultFilterFn() { return true; },
             
                 constructor: function wsapi_tree_store_ctor(config) {
                   var me = this,
@@ -493,7 +531,8 @@
                     page: me.currentPage,
                     start: (me.currentPage - 1) * me.pageSize,
                     limit: me.pageSize,
-                    isPaging: true
+                    isPaging: true,
+                    query: me.query
                   };
             
                   //console.log("Tree Store Load Options");
@@ -515,6 +554,7 @@
                     childArtifacts: me.childArtifacts,
                     isRoot: me.getRootNode().modelName === options.node.modelName,
                     canExpandFn: me.canExpandFn,
+                    filterFn: me.filterFn,
                     wsapiStoreOptions: options.wsapi
                   }));
             
@@ -551,11 +591,55 @@
               });
             }(this));
             (function (global) {
+              Ext.tree.ViewDropZone.prototype.getPosition = function(e, node) {
+                  var view = this.view,
+                      record = view.getRecord(node),
+                      y = e.getPageY(),
+                      noAppend = false, // removed check for isLeaf
+                      noBelow = false,
+                      region = Ext.fly(node).getRegion(),
+                      fragment;
+            
+                  // If we are dragging on top of the root node of the tree, we always want to append.
+                  if (record.isRoot()) {
+                      return 'append';
+                  }
+            
+                  // Return 'append' if the node we are dragging on top of is not a leaf else return false.
+                  if (this.appendOnly) {
+                      return noAppend ? false : 'append';
+                  }
+            
+                  if (!this.allowParentInsert) {
+                      noBelow = record.hasChildNodes() && record.isExpanded();
+                  }
+            
+                  fragment = (region.bottom - region.top) / (noAppend ? 2 : 3);
+                  if (y >= region.top && y < (region.top + fragment)) {
+                      return 'before';
+                  }
+                  else if (!noBelow && (noAppend || (y >= (region.bottom - fragment) && y <= region.bottom))) {
+                      return 'after';
+                  }
+                  else {
+                      return 'append';
+                  }
+              };
+            
+              Ext.tree.View.prototype.getCellCls = function(record, column) {
+                  return Rally.ui.grid.CellClsDecorator.getCellCls(record, column);
+              };
             
               Ext.define("Rally.ui.tree.grid.Panel", {
                 extend: "Ext.tree.Panel",
             
                 alias: "wiget.rallytreegrid",
+            
+                mixins: {
+                  messageable: "Rally.Messageable"
+                },
+            
+                plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
             
                 config: {
                   width: "100%",
@@ -571,58 +655,232 @@
                   viewConfig: {
                 		toggleOnDblClick: false,
                 		plugins: { ptype: 'treeviewdragdrop' }
-                	},
+                	}
             
                 },
             
-                constructor: function rally_tree_grid_ctor(config) {
-                  var me = this;
+                treeColumnCfg: {
+                  xtype: 'treecolumn',
+                  text: 'ID',
+                  dataIndex: 'FormattedID',
+                  flex: 1
+                },
             
+                constructor: function rally_tree_grid_ctor(config) {
+                  var me = this,
+                      autoGenColumns,
+                      i, ii;
+            
+                  if (config.columnCfgs && config.models) {
+                    config.columns = [me.treeColumnCfg];
+                    for (i = 0, ii = config.models.length; i < ii; i++) {
+                      autoGenColumns = Ext.create('Rally.ui.grid.ColumnBuilder')
+                        .withDefaultColumns(config.columnCfgs)
+                        .shouldAutoAddAllModelFieldsAsColumns(true)
+                        .build(config.models[i].superclass);
+            
+                      console.log("Auto Columns", autoGenColumns);
+                      config.columns = config.columns.concat(autoGenColumns);
+                    }
+                  }
+            
+                  delete config.models;
+                  delete config.columCfgs;
+            
+                  console.log("Column Config", config.columns);
                   me.callParent(arguments);
             
+                  console.log("Version", Ext.getVersion().version);
+            
+                  me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
                   me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
+                },
+            
+            
+                _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
+                  console.log("Can Drag Drop", arguments);
+            
+                  var rec = dragData.records[0],
+                      targetType,
+                      targetOrd = -1,
+                      sourceType,
+                      sourceOrd = -1;
+            
+                  targetType = targetNode.raw._type.toLowerCase();
+                  sourceType = rec.raw._type.toLowerCase();
+            
+                  if (targetType.indexOf("portfolioitem") >= 0) {
+                    targetOrd = targetNode.self.superclass.self.ordinal;
+                    targetType = targetType.split("/")[0];
+                  }
+            
+                  if (sourceType.indexOf("portfolioitem") >= 0) {
+                    sourceOrd = rec.self.superclass.self.ordinal;
+                    sourceType = sourceType.split("/")[0];
+                  }
+            
+                  if (sourceType === targetType === "portfolioitem") {
+                    if (targetOrd === sourceOrd + 1) {
+                      return true;
+                    } else {
+                      return false;
+                    }
+                  }
+            
+                  if (sourceType === "hierarchicalrequirement") {
+                    if (targetType === "portfolioitem") {
+                      if (targetOrd === 0) {
+                        return true;
+                      } else {
+                        return false;
+                      }
+                    } else if (targetType === "hierarchicalrequriement") {
+                      return true;
+                    } else {
+                      return false;
+                    }
+                  }
+            
+                  return false;
                 },
             
                 _onBeforeDrop: function _onBeforeDrop(elt, data, overModel, dropPosition, dropFunciton, eOpts) {
                   console.log("On Before Drop", arguments);
+                  var success = false;
             
                   if (dropPosition === "append") {
-                    return this._appendNodes.apply(this, arguments);
+                    success = this._appendNodes.apply(this, arguments);
+                    overModel.data.leaf = false;
                   } else if ((dropPosition === "before") || (dropPosition === "after")) {
-                    return this._rerankNodes.apply(this, arguments);
-                  } else {
-                    return false;
+                    success = this._rerankNodes.apply(this, arguments);
                   }
+            
+                  return success;
                 },
             
                 _appendNodes: function _appendNodes(elt, data, overModel, dropPosition, dropFunction, eOpts) {
                   var me = this,
                       recs,
-                      i, ii;
+                      success = true,
+                      i, ii,
+                      type;
             
                   if (!data) {
                     return false;
                   }
             
-                  
+                  recs = data.records;
+                  for (i = 0, ii = recs.length; i < ii; i++) {
+                    type = recs[i].raw._type.toLowerCase();
+                    if (type.indexOf("portfolioitem") >= 0) {
+                      success = success && this._doReparentPI(overModel, recs[i]);
+                    } else if (type === "hierarchicalrequirement") {
+                      success = success && this._doReparentUS(overModel, recs[i]);
+                    } else if (type === "defect") {
+                      success = success && this._doReparentDE(overModel, recs[i]);
+                    } else if (type === "task") {
+                      success = success && this._doReparentTA(overModel, recs[i]);
+                    } else {
+                      success = false; // I don't know what you are
+                      console.log("Don't know how to reparent this model", recs[i]);
+                    }
+                  }
+            
+                  return success;
+                },
+            
+                _doReparentPI: function _doReparentPI(parentModel, childModel) {
+                  var parentOrd,
+                      childOrd,
+                      parentTypeName,
+                      childTypeName;
+            
+                  parentOrd = parentModel.self.superclass.self.ordinal;
+                  childOrd = childModel.self.superclass.self.ordinal;
+            
+                  if (parentOrd !== childOrd + 1) {
+                    parentTypeName = parentModel.self.superclass.self.elementName;
+                    childTypeName = childModel.self.superclass.self.elementName;
+            
+                    //Rally.ui.flair.FlairManager.showFlair({message: "A " + childTypeName + " cannot be the child of a " + parentTypeName});
+                    return false;
+                  } else {
+                    childModel.set("Parent", parentModel.raw._ref);
+                    childModel.save();
+                  }
             
                   return true;
                 },
             
-                _doReparentPI: function _doReparentPI(parentModel, childModel) {
-                },
-            
                 _doReparentUS: function _doReparentUS(parentModel, childModel) {
+                  var parentTypeName,
+                      parentOrd = -1;
+            
+                  parentTypeName = parentModel.raw._type.toLowerCase();
+                  if (parentTypeName.indexOf("portfolioitem") >= 0) {
+                    parentOrd = parentModel.self.superclass.self.ordinal;
+                    if (parentOrd > 0) {
+                      return false;
+                    }
+            
+                    childModel.set("PortfolioItem", parentModel.raw._ref);
+                    childModel.save();
+                  } else if (parentTypeName === "hierarchicalrequirement") {
+                    childModel.set("Parent", parentModel.raw._ref);
+                    childModel.save();
+                  } else {
+                    return false;
+                  }
+            
+                  return true;
                 },
             
                 _doReparentTA: function _doReparentTA(parentModel, childModel) {
+                  if ({
+                    hierarchicalrequirement: 1, 
+                    defect: 1,
+                    defectsuite: 1,
+                    testset: 1}.hasOwnProperty(parentModel.raw._type.toLowerCase())) {
+            
+                    if (parentModel.get("Children").length === 0) {
+                      childModel.set("WorkProduct", parentModel.raw._ref);
+                      childModel.save();
+            
+                      return true;
+                    }
+                  }
+            
+                  return false;
                 },
             
                 _doReparentDE: function _doReparentDE(parentModel, childModel) {
+                  var parentType = parentModel.raw._type.toLowerCase();
+                  if (parentType === "hierarchicalrequirement") {
+                    childModel.set("Requirement", parentModel.raw._ref);
+                    childModel.save();
+                    return true;
+                  } else if (parentType === "defectsuite") {
+                    childMode.set("DefectSuite", parentModel.raw._ref);
+                    childModel.save();
+                    return true;
+                  }
+            
+                  return false;
                 },
             
                 _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
+                  console.log("ReRank", arguments);
             
+                  var rankType = dropPosition === "after" ? "rankBelow" : "rankAbove",
+                      params = {};
+            
+                  params[rankType] = Rally.util.Ref.getRelativeUri(overModel.raw._ref);
+            
+                  data.records[0].save({
+                    params: params
+                  });
+            
+                  return true;
                 }
             
               });
@@ -721,59 +979,461 @@
                 }
               });
             
+              var defaultFilterFn = function () { return true; };
+            
+              var lbapiFilterFn = function (rec) { 
+                if (rec.data._type.toLowerCase() === "hierarchicalrequirement") {
+                  return this.inscope[rec.data.ObjectID] || this.items[rec.data.ObjectID]; 
+                } else {
+                  return true;
+                }
+              };
+            
+              var renderTask = function renderTask(p, val, __, rec) {
+                if (rec && rec.get) {
+                  if (rec.raw._type.toLowerCase() !== "task") {
+                    if (rec.raw.hasOwnProperty(p)) {
+                      return rec.raw[p];
+                    }
+                  }
+                }
+            
+                return val;
+              };
+            
               Ext.define('CustomApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
             
+                childTypes: {
+                  defect: false,
+                  task: false,
+                  testcase: false
+                },
+            
+                mixins: {
+                  maskable: "Rally.ui.mask.Maskable"
+                },
+            
+                loading: null,
+            
+                filterFn: defaultFilterFn,
+            
                 launch: function() {
-                  var store = Ext.create('Rally.data.WsapiTreeStore', {
-                    //rootArtifacts: ['hierarchicalrequirement'],
-                    //childArtifacts: ['hierarchicalrequirement', 'task'],
-                    rootArtifacts: ['portfolioitem/theme' ],
-                    childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'testcase'],
-                    //canExpandFn: function(rec) {
-                    //},
-                    listeners: {
-                      append: function appened() {
-                        //console.log("Appending Data");
-                        //console.dir(arguments);
+                  var me = this;
+            
+                  //me.loading = new Ext.LoadMask(me.up("dashboard-container"), {msg: "Loading..."});
+                  me.maskTarget = me.el;
+            
+                  me.showLoading();
+            
+                  me.add(Ext.create("Ext.Panel", {
+                    border: false,
+                    layout: 'anchor',
+                    margin: '15 0 0 0',
+                    padding: '0 0 0 25',
+                    height: 45,
+                    width: '100%',
+                    items: [
+                      //{
+                        //anchor: '100% 45',
+                        //items: [
+                      {
+                        width: '100%',
+                        anchor: '100% 45',
+                        //height: 35,
+                        border: false,
+                        layout: 'hbox',
+                        items: [
+                          me._createViewSelector(),
+                          {
+                            xtype: 'tbspacer',
+                            flex: 1
+                            //width: 200
+                          },
+                          me._createTypeChoices()
+                        ]
+                    //}]
+                        }]
+                  }));
+            
+                  //me.add(me._createTypeChoices());
+            
+                },
+            
+                showLoading: function() {
+                  var me = this;
+            
+                  me.showMask("Loading...");
+                },
+            
+                hideLoading: function() {
+                  var me = this;
+            
+                  me.hideMask();
+                },
+            
+                _createViewSelector: function _createViewSelector() {
+                  Ext.regModel("Views", {
+                    fields: [
+                      { type: "string", name: "name" },
+                      { type: "object", name: "value" }
+                    ]
+                  });
+            
+                  var data = [];
+            
+                  data.push({
+                    name: "All User Stories",
+                    value: {}
+                  });
+            
+                  data.push({
+                    name: "Has Children",
+                    value: {
+                      wsapi: [
+                        {
+                           property: "DirectChildrenCount",
+                           operator: ">",
+                           value: "0"
+                        }
+                      ]
+                    }
+                  });
+            
+                  data.push({
+                    name: "Has Test Cases (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+                          TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "SOME_RUN_ALL_PASSING", "ALL_RUN_NONE_PASSING", "ALL_RUN_ALL_PASSING"] }
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
                       }
                     }
                   });
             
-                  this.add(Ext.create('Rally.ui.tree.grid.Panel', {
-                    store: store,
+                  data.push({
+                    name: "No Test Cases (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+                          TestCaseStatus: "NONE"
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+                      }
+                    }
+                  });
+            
+                  data.push({
+                    name: "All Test Cases Passing (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+                          TestCaseStatus: { $in: ["ALL_RUN_ALL_PASSING"] }
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+                      }
+                    }
+                  });
+            
+                  data.push({
+                    name: "Test Cases Not Passing (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+                          TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "ALL_RUN_NONE_PASSING"] }
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+                      }
+                    }
+                  });
+            
+                  data.push({
+                    name: "Has Active Defects (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
+                          DefectStatus: { $in: ["NONE_CLOSED", "SOME_CLOSED"] }
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
+                      }
+                    }
+                  });
+            
+                  data.push({
+                    name: "No Active Defects (LB)", 
+                    value: {
+                      lbapi: {
+                        find: {
+                          _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
+                          DefectStatus: { $in: ["NONE"] }
+                        },
+                        fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
+                      }
+                    }
+                  });
+            
+                  var store = Ext.create("Ext.data.Store", {
+                    model: "Views",
+                    data: data
+                  });
+            
+                  var cb = Ext.create("Ext.form.field.ComboBox", {
+                    fieldLabel: "Views",
+                    margin: "0 5 0 0",
+                    autoSelect: true,
+                    editable: false,
+                    forceSelection: true,
+                    displayField: "name",
+                    valueField: "value",
+                    labelWidth: 75,
+                    queryMode: "local",
+                    store: store
+                  });
+            
+                  cb.on('change', this._applyFilter, this);
+                  cb.select(cb.getStore().data.items[0]);
+            
+                  return cb;
+                },
+            
+            
+                _createTypeChoices: function _createTypeChoices() {
+                  var me = this;
+            
+                  return Ext.create("Ext.form.Panel", {
+                    width: '100%',
+                    height: '100%',
+                    border: false,
+                    region: 'center',
+                    defaultType: 'checkboxfield',
+                    layout: 'hbox',
+                    defaults: {
+                      margin: "0 5 0 0"
+                    },
+                    items: [{
+                      boxLabel: 'Defects',
+                      name: 'types',
+                      id: 'defect_type',
+                      inputValue: 'defect',
+                      listeners: {
+                        change: me._setTypeChoices,
+                        scope: me
+                      }
+                    }, {
+                      boxLabel: 'Tasks',
+                      name: 'types',
+                      id: 'task_type',
+                      inputValue: 'task',
+                      listeners: {
+                        change: me._setTypeChoices,
+                        scope: me
+                      }
+                    }, {
+                      boxLabel: 'Test Cases',
+                      name: 'types',
+                      id: 'testcase_type',
+                      inputValue: 'testcase',
+                      listeners: {
+                        change: me._setTypeChoices,
+                        scope: me
+                      }
+                    }]
+                  });
+                },
+            
+                _loadLbapiQuery: function _loadLbapiQuery(query, callback) {
+                  var me = this,
+                      i, ii,
+                      projects = "__PROJECT_OIDS_IN_SCOPE__".split(',');
+                      woid = me.getContext().getWorkspace().ObjectID;
+            
+                  me.showLoading();
+            
+                  for (i = 0, ii = projects.length; i < ii; i++) {
+                    projects[i] = parseInt(projects[i], 10);
+                  }
+            
+                  query.pagesize = 1000;
+                  query.find.Project = {$in: projects};
+                  query.find.__At = "current";
+            
+            
+                  Ext.Ajax.request({
+                    url: "/analytics/v2.0/service/rally/workspace/" + woid + "/artifact/snapshot/query.js",
+                    method: "POST",
+                    jsonData: query,
+                    headers: { 
+                      'Content-Type' : 'application/json' 
+                    },
+                    success: function lbapiSuccess(response) {
+                      var res = Ext.decode(response.responseText);
+                      console.log(res);
+                      console.log(res.Results.length);
+                      Ext.callback(callback, me, [res]);
+                    }
+                  });
+                },
+            
+                _applyFilter: function _applyFilter(sender, newVal, oldVal, eOpts) {
+                  var me = this;
+            
+                  me.showLoading();
+            
+                  if (this._treePanel) {
+                    this.remove(this._treePanel);
+                  }
+            
+                  me.currentFilter = newVal;
+            
+                  Rally.data.TreeModelFactory.getModel({
+                    type: "HierarchicalRequirement",
+                    success: function modelSuccess(model) {
+                      me.model = model;
+            
+                      var doLoad = function(query, childArtifacts) {
+                        me.store = Ext.create('Rally.data.WsapiTreeStore', {
+                          rootArtifacts: ['hierarchicalrequirement' ],
+                          childArtifacts: childArtifacts,
+                          query: query,
+                          filterFn: me.filterFn
+                        })
+            
+                        me._onLoadData(newVal);
+                      };
+            
+                      var query = null, i, ii;
+            
+                      var childArtifacts = ["hierarchicalrequirement"];
+            
+                      for (i in me.childTypes) {
+                        if (me.childTypes.hasOwnProperty(i)) {
+                          if (me.childTypes[i]) {
+                            childArtifacts.push(i);
+                          }
+                        }
+                      }
+            
+                      if (newVal.wsapi && newVal.wsapi.length > 0) {
+                        query = Ext.create("Rally.data.QueryFilter", newVal.wsapi[0]);
+            
+                        for (i = 1, ii = newVal.wsapi.length; i < ii; i++) {
+                          query = query.and(Ext.create("Rally.data.QueryFilter", newVal.wsapi[i]));
+                        }
+            
+                        me.filterFn = defaultFilterFn;
+            
+                        doLoad(query, childArtifacts);
+                      } else if (newVal.lbapi) {
+                        me._loadLbapiQuery(newVal.lbapi, function(res) {
+                          var topLevel = {},
+                              inscope = {},
+                              items = {},
+                              prop = {
+                                property: "ObjectID",
+                                operator: "=",
+                                value: ""
+                              },
+                              results = res.Results,
+                              i, ii, j, jj;
+            
+                          if (results.length > 0) {
+                            for (i = 0, ii = results.length; i < ii; i++) {
+                              for (j = 0, jj = results[i]._ItemHierarchy.length; j < jj; j++) {
+                                inscope[results[i]._ItemHierarchy[j]] = 1;
+                              }
+                              items[results[i].ObjectID] = 1;
+                              //topLevel[results[i]._ItemHierarchy[0]] = 1;
+                            }
+                          }
+            
+                          for (i in inscope) {
+                            if (inscope.hasOwnProperty(i)) {
+                              console.log("Adding to list", i);
+                              prop.value = i;
+            
+                              if (query === null) {
+                                query = Ext.create("Rally.data.QueryFilter", prop);
+                              } else {
+                                query = query.or(Ext.create("Rally.data.QueryFilter", prop));
+                              }
+                            }
+                          }
+            
+                          me.filterFn = Ext.bind(lbapiFilterFn, {inscope: inscope, items: items});
+            
+                          doLoad(query, childArtifacts);
+                        });
+                      } else {
+                        doLoad(query, childArtifacts);
+                      }
+                    }
+                  });
+                },
+            
+                _setTypeChoices: function _setTypeChoices(field, newVal, oldVal) {
+                  console.log("Changed Type", field, newVal, oldVal);
+                  var me = this;
+            
+                  me.childTypes[field.inputValue] = newVal;
+            
+                  me._applyFilter(null, me.currentFilter);
+                },
+            
+                _onLoadData: function _onLoadData(newVal) {
+                  var me = this;
+            
+                  console.log("Loading data", newVal);
+            
+                  me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
+                    store: me.store,
+                    models: [me.model],
                     dockedItems: [{
                       xtype: 'rallypagingtoolbar',
-                      store: store,   // same store GridPanel is using
+                      store: me.store,   // same store TreeGridPanel is using
                       dock: 'bottom',
-                      displayInfo: true
+                      displayInfo: true,
+                      listeners: {
+                        beforechange: function () {
+                          this.showLoading();
+                        },
+                        scope: me
+                      }
                     }],
-                    columns: [{
-                      xtype: 'treecolumn',
-                      text: 'Name',
-                      dataIndex: 'Name',
-                      flex: 2
-                    }, {
-                      xtype: 'templatecolumn',
-                      tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
-                      text: '% Done by Plan Est',
-                      dataIndex: 'PercentDoneByPlanEstimate',
-                      flex: 1
-                    }, {
-                      text: 'Schedule State',
-                      dataIndex: 'ScheduleState',
-                      flex: 1
-                    }, {
-                      text: 'Est. Hours',
-                      dataIndex: 'Estimate',
-                      flex: 1
-                    }, {
-                      text: 'Remaining',
-                      dataIndex: 'ToDo',
-                      flex: 1
-                    }]
-                  }));
+                    listeners: {
+                      load: function() { me.hideLoading(); },
+                    },
+                    columnCfgs: [
+                      "Name",
+                      "Release",
+                      "Iteration",
+                      "ScheduleState",
+                      "PlanEstimate",
+                      {
+                        text: 'Task Est.',
+                        dataIndex: 'Estimate',
+                        renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
+                        flex: 1
+                      },
+                      {
+                        text: 'To Do',
+                        dataIndex: 'ToDo',
+                        renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
+                        flex: 1
+                      },
+                      "Owner"
+                    ]
+            
+                  });
+            
+                  me._treePanel.on("load", function() { me.hideLoading(); });
+                  me.add(me._treePanel);
                 }
               });
             }(this));
@@ -787,6 +1447,168 @@
     <style type="text/css">
         .app {
              /* Add app styles here */
+        }
+        
+        .x-tree-no-lines .x-tree-elbow {
+          background-color: transparent;
+        }
+        
+        /* line 6, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-no-lines .x-tree-elbow-end {
+          background-color: transparent;
+        }
+        
+        /* line 10, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-no-lines .x-tree-elbow-line {
+          background-color: transparent;
+        }
+        
+        /* line 15, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-plus {
+          background: transparent no-repeat 0 0;
+        }
+        
+        /* line 19, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-end-plus {
+          background: transparent no-repeat 0 0;
+        }
+        
+        /* line 23, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-end-minus {
+          background: transparent no-repeat -16px 0;
+        }
+        
+        /* line 27, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-minus {
+          background: transparent no-repeat -16px 0;
+        }
+        
+        /* line 31, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow {
+          background-color: transparent !important;
+        }
+        
+        /* line 35, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-end {
+          background-color: transparent !important;
+        }
+        
+        /* line 39, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-line {
+          background-color: transparent !important;
+        }
+        
+        /* line 45, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-expander-over .x-tree-elbow-plus,
+        .x-tree-arrows .x-tree-expander-over .x-tree-elbow-end-plus {
+          background-position: -32px 0;
+        }
+        
+        /* line 50, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-expander-over .x-tree-elbow-minus,
+        .x-tree-arrows .x-tree-expander-over .x-tree-elbow-end-minus {
+          background-position: -48px 0;
+        }
+        
+        /* line 55, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-grid-tree-node-expanded .x-tree-elbow-plus,
+        .x-tree-arrows .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+          background-position: -16px 0;
+        }
+        
+        /* line 60, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander-over .x-tree-elbow-plus,
+        .x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander-over .x-tree-elbow-end-plus {
+          background-position: -48px 0;
+        }
+        
+        /* line 67, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-elbow-plus,
+        .x-tree-elbow-minus,
+        .x-tree-elbow-end-plus,
+        .x-tree-elbow-end-minus {
+          cursor: pointer;
+        }
+        
+        /* line 73, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-tree-elbow {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow.gif');
+        }
+        /* line 77, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-tree-elbow-end {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end.gif');
+        }
+        /* line 81, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-tree-elbow-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-plus.gif');
+        }
+        /* line 85, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-tree-elbow-end-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-plus.gif');
+        }
+        /* line 89, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-grid-tree-node-expanded .x-tree-elbow-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-minus.gif');
+        }
+        /* line 93, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-minus.gif');
+        }
+        /* line 97, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-lines .x-tree-elbow-line {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-line.gif');
+        }
+        
+        /* line 104, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-no-lines .x-tree-elbow-plus,
+        .x-tree-no-lines .x-tree-elbow-end-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-plus-nl.gif');
+        }
+        /* line 109, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-no-lines .x-grid-tree-node-expanded .x-tree-elbow-plus,
+        .x-tree-no-lines .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-minus-nl.gif');
+        }
+        
+        /* line 118, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-arrows .x-tree-elbow-plus,
+        .x-tree-arrows .x-tree-elbow-minus,
+        .x-tree-arrows .x-tree-elbow-end-plus,
+        .x-tree-arrows .x-tree-elbow-end-minus {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/arrows.gif');
+        }
+        
+        /* line 123, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-icon {
+          margin-right: 3px;
+        }
+        
+        /* line 132, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-elbow,
+        .x-tree-elbow-end,
+        .x-tree-elbow-plus,
+        .x-tree-elbow-end-plus,
+        .x-tree-elbow-empty,
+        .x-tree-elbow-line {
+          height: 18px;
+          width: 16px;
+        }
+        
+        /* line 137, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-icon-leaf {
+          width: 16px;
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/leaf.gif');
+        }
+        
+        /* line 142, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-tree-icon-parent {
+          width: 16px;
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/folder.gif');
+        }
+        
+        /* line 147, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+        .x-grid-tree-node-expanded .x-tree-icon-parent {
+          background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/folder-open.gif');
         }
         
         .x-tree-icon-leaf, .x-tree-icon-parent, .x-grid-tree-node-expanded .x-tree-icon-parent {
