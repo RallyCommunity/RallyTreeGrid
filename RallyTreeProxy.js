@@ -5,7 +5,7 @@
     extend: "Rally.data.WsapiRestProxy",
 
     topLevelModels: null, //["HierarchicalRequirement"],
-    childArtifacts: null, //["HierarchicalRequirement"],
+    childModels: null, //["HierarchicalRequirement"],
     isRoot: false,
     model: null,
 
@@ -18,7 +18,7 @@
         totalProperty: "TotalResultCount"
       });
 
-      //console.log("For Artifacts", me.topLevelModels, me.childArtifacts);
+      //console.log("For Artifacts", me.topLevelModels, me.childModels);
       //debugger;
     },
 
@@ -90,13 +90,13 @@
       var loadedArtifacts = {},
           me = this,
           processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
-          i= 0, ii = me.childArtifacts.length;
+          i= 0, ii = me.childModels.length;
 
       //console.log("Reading Children");
 
       for (; i < ii; i++) {
-        //console.log("Fetching children of type", me.childArtifacts[i], i, ii);
-        loadedArtifacts[me.childArtifacts[i].toLowerCase()] = 0;
+        //console.log("Fetching children of type", me.childModels[i], i, ii);
+        loadedArtifacts[me.childModels[i].toLowerCase()] = 0;
 
         (function iHateJsScoping(type) {
           var sorter = [{
@@ -122,7 +122,7 @@
               });
             }
           });
-        }(me.childArtifacts[i].toLowerCase()));
+        }(me.childModels[i].toLowerCase()));
       }
 
     },

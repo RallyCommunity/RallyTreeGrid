@@ -324,10 +324,10 @@
         success: function modelSuccess(model) {
           me.model = model;
 
-          var doLoad = function(query, childArtifacts) {
+          var doLoad = function(query, childModels) {
             me.store = Ext.create('Rally.data.WsapiTreeStore', {
               topLevelModels: ['hierarchicalrequirement' ],
-              childArtifacts: childArtifacts,
+              childModels: childModels,
               query: query,
               filterFn: me.filterFn
             })
@@ -337,12 +337,12 @@
 
           var query = null, i, ii;
 
-          var childArtifacts = ["hierarchicalrequirement"];
+          var childModels = ["hierarchicalrequirement"];
 
           for (i in me.childTypes) {
             if (me.childTypes.hasOwnProperty(i)) {
               if (me.childTypes[i]) {
-                childArtifacts.push(i);
+                childModels.push(i);
               }
             }
           }
@@ -356,7 +356,7 @@
 
             me.filterFn = defaultFilterFn;
 
-            doLoad(query, childArtifacts);
+            doLoad(query, childModels);
           } else if (newVal.lbapi) {
             me._loadLbapiQuery(newVal.lbapi, function(res) {
               var topLevel = {},
@@ -395,10 +395,10 @@
 
               me.filterFn = Ext.bind(lbapiFilterFn, {inscope: inscope, items: items});
 
-              doLoad(query, childArtifacts);
+              doLoad(query, childModels);
             });
           } else {
-            doLoad(query, childArtifacts);
+            doLoad(query, childModels);
           }
         }
       });

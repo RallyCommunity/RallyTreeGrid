@@ -34,7 +34,7 @@
 
       //me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
         //topLevelModels: me.topLevelModels,
-        //childArtifacts: me.childArtifacts
+        //childModels: me.childModels
       //});
 
 
@@ -79,7 +79,7 @@
       me.setProxy(Ext.create("Rally.data.WsapiTreeProxy", {
         model: options.node,
         topLevelModels: me.topLevelModels,
-        childArtifacts: me.childArtifacts,
+        childModels: me.childModels,
         isRoot: me.getRootNode().modelName === options.node.modelName,
         canExpandFn: me.canExpandFn,
         filterFn: me.filterFn,
