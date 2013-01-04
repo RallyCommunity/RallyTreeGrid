@@ -2,6 +2,168 @@
      /* Add app styles here */
 }
 
+.x-tree-no-lines .x-tree-elbow {
+  background-color: transparent;
+}
+
+/* line 6, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-no-lines .x-tree-elbow-end {
+  background-color: transparent;
+}
+
+/* line 10, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-no-lines .x-tree-elbow-line {
+  background-color: transparent;
+}
+
+/* line 15, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-plus {
+  background: transparent no-repeat 0 0;
+}
+
+/* line 19, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-end-plus {
+  background: transparent no-repeat 0 0;
+}
+
+/* line 23, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-end-minus {
+  background: transparent no-repeat -16px 0;
+}
+
+/* line 27, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-minus {
+  background: transparent no-repeat -16px 0;
+}
+
+/* line 31, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow {
+  background-color: transparent !important;
+}
+
+/* line 35, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-end {
+  background-color: transparent !important;
+}
+
+/* line 39, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-line {
+  background-color: transparent !important;
+}
+
+/* line 45, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-expander-over .x-tree-elbow-plus,
+.x-tree-arrows .x-tree-expander-over .x-tree-elbow-end-plus {
+  background-position: -32px 0;
+}
+
+/* line 50, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-expander-over .x-tree-elbow-minus,
+.x-tree-arrows .x-tree-expander-over .x-tree-elbow-end-minus {
+  background-position: -48px 0;
+}
+
+/* line 55, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-elbow-plus,
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+  background-position: -16px 0;
+}
+
+/* line 60, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander-over .x-tree-elbow-plus,
+.x-tree-arrows .x-grid-tree-node-expanded .x-tree-expander-over .x-tree-elbow-end-plus {
+  background-position: -48px 0;
+}
+
+/* line 67, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-elbow-plus,
+.x-tree-elbow-minus,
+.x-tree-elbow-end-plus,
+.x-tree-elbow-end-minus {
+  cursor: pointer;
+}
+
+/* line 73, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-tree-elbow {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow.gif');
+}
+/* line 77, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-tree-elbow-end {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end.gif');
+}
+/* line 81, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-tree-elbow-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-plus.gif');
+}
+/* line 85, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-tree-elbow-end-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-plus.gif');
+}
+/* line 89, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-grid-tree-node-expanded .x-tree-elbow-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-minus.gif');
+}
+/* line 93, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-minus.gif');
+}
+/* line 97, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-lines .x-tree-elbow-line {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-line.gif');
+}
+
+/* line 104, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-no-lines .x-tree-elbow-plus,
+.x-tree-no-lines .x-tree-elbow-end-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-plus-nl.gif');
+}
+/* line 109, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-no-lines .x-grid-tree-node-expanded .x-tree-elbow-plus,
+.x-tree-no-lines .x-grid-tree-node-expanded .x-tree-elbow-end-plus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/elbow-end-minus-nl.gif');
+}
+
+/* line 118, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-arrows .x-tree-elbow-plus,
+.x-tree-arrows .x-tree-elbow-minus,
+.x-tree-arrows .x-tree-elbow-end-plus,
+.x-tree-arrows .x-tree-elbow-end-minus {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/arrows.gif');
+}
+
+/* line 123, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-icon {
+  margin-right: 3px;
+}
+
+/* line 132, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-elbow,
+.x-tree-elbow-end,
+.x-tree-elbow-plus,
+.x-tree-elbow-end-plus,
+.x-tree-elbow-empty,
+.x-tree-elbow-line {
+  height: 18px;
+  width: 16px;
+}
+
+/* line 137, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-icon-leaf {
+  width: 16px;
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/leaf.gif');
+}
+
+/* line 142, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-tree-icon-parent {
+  width: 16px;
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/folder.gif');
+}
+
+/* line 147, /apps/2.0p2/ext/4.0.7/resources/themes/stylesheets/ext4/default/widgets/_tree.scss */
+.x-grid-tree-node-expanded .x-tree-icon-parent {
+  background-image: url('/apps/2.0p2/ext/4.0.7/resources/themes/images/default/tree/folder-open.gif');
+}
+
 .x-tree-icon-leaf, .x-tree-icon-parent, .x-grid-tree-node-expanded .x-tree-icon-parent {
   background: url(/slm/images/icon_portfolio_item.gif);
 }
