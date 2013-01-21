@@ -5,6 +5,17 @@ The Rally Tree Grid is a collection of ExtJS components to use the
 Ext.tree.Panel component.  There is also a subclass of Ext.tree.Panel
 that uses the default configuration to theme the Tree Grid.
 
+To build the examples you will need to copy them from the examples
+folder and rename/override the App.js file.  My general command to build
+(on my Mac) is:
+
+```bash
+cp examples/US.js App.js && rake build && cat deploy/App.html | pbcopy
+```
+
+That line will copy the file, build the deployable html file and copy
+the contents to the clipboard.
+
 Classes Created
 ---------------
 
@@ -22,7 +33,7 @@ http://screencast.com/t/NnMDX85xDze
 Screenshot
 ----------
 
-![Rally Tree Grid Screenshot](https://raw.github.com/Echo3ToEcho7/RallyTreeGrid/master/deploy/RallyTreeGrid.png)
+![Rally Tree Grid Screenshot](https://raw.github.com/RallyCommunity/RallyTreeGrid/master/deploy/RallyTreeGrid.png)
 
 Example
 -------
@@ -37,8 +48,8 @@ Ext.define('CustomApp', {
 
   launch: function() {
     var store = Ext.create('Rally.data.WsapiTreeStore', {
-      rootArtifacts: ['portfolioitem/theme' ],
-      childArtifacts: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task'],
+      topLevelModels: ['portfolioitem/theme' ],
+      childModels: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task'],
     });
 
     this.add(Ext.create('Rally.ui.tree.grid.Panel', {
@@ -80,8 +91,8 @@ Ext.define('CustomApp', {
 
   launch: function() {
     var store = Ext.create('Rally.data.WsapiTreeStore', {
-      rootArtifacts: ['hierarchicalrequirement'],
-      childArtifacts: ['hierarchicalrequirement', 'task'],
+      topLevelModels: ['hierarchicalrequirement'],
+      childModels: ['hierarchicalrequirement', 'task'],
       }
     });
 

@@ -4,8 +4,8 @@
   Ext.define("Rally.data.WsapiTreeStore", {
     extend: "Ext.data.TreeStore",
 
-    rootArtifacts: ["HierarchicalRequirement", "Defect"],
-    childArtifacts: ["HierarchicalRequirement", "Task"],
+    topLevelModels: ["HierarchicalRequirement"],
+    childModels: ["HierarchicalRequirement", "Task"],
 
     pageSize: 25,
 
@@ -13,6 +13,8 @@
     totalCount: 0,
 
     currentPage: 1,
+
+    filterFn: function defaultFilterFn() { return true; },
 
     constructor: function wsapi_tree_store_ctor(config) {
       var me = this,
@@ -23,16 +25,16 @@
 
       me.callParent([config]);
 
-      //console.log("WsapiTreeStore Root Artifacts", me.rootArtifacts);
+      //console.log("WsapiTreeStore Root Artifacts", me.topLevelModels);
 
       me.setRootNode(Ext.create("Rally.data.TreeRootModel", {
-        rootArtifacts: me.rootArtifacts,
+        topLevelModels: me.topLevelModels,
         leaf: false
       }));
 
       //me.proxy = Ext.create("Rally.data.WsapiTreeProxy", {
-        //rootArtifact: me.rootArtifacts,
-        //childArtifacts: me.childArtifacts
+        //topLevelModels: me.topLevelModels,
+        //childModels: me.childModels
       //});
 
 
@@ -57,7 +59,8 @@
         page: me.currentPage,
         start: (me.currentPage - 1) * me.pageSize,
         limit: me.pageSize,
-        isPaging: true
+        isPaging: true,
+        query: me.query
       };
 
       //console.log("Tree Store Load Options");
@@ -75,10 +78,11 @@
 
       me.setProxy(Ext.create("Rally.data.WsapiTreeProxy", {
         model: options.node,
-        rootArtifacts: me.rootArtifacts,
-        childArtifacts: me.childArtifacts,
+        topLevelModels: me.topLevelModels,
+        childModels: me.childModels,
         isRoot: me.getRootNode().modelName === options.node.modelName,
         canExpandFn: me.canExpandFn,
+        filterFn: me.filterFn,
         wsapiStoreOptions: options.wsapi
       }));
 
