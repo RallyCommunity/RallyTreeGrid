@@ -3,9 +3,12 @@
 <head>
     <title>TreeGrid</title>
 
-    <script type="text/javascript" src="/apps/2.0p5/sdk-debug.js?wsapiVersion=1.39"></script>
+    <script type="text/javascript"
+src="/apps/2.0p3/sdk-debug.js?wsapiVersion=1.37"></script>
 
     <script type="text/javascript">
+if (typeof window.console === "undefined") window.console = { log: function () {} };
+
         Rally.onReady(function() {
             (function (global) {
               Ext.define("Rally.data.WsapiTreeProxy", {
@@ -160,9 +163,6 @@
             
                       data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
                       data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
-                      if (data[i].data.href.indexOf("#") !== 1) {
-                        data[i].data.href = "/#" + data[i].data.href;
-                      }
                       data[i].data.hrefTarget = "_top";
             
                       if (this.filterFn(data[i])) {
@@ -317,19 +317,14 @@
             
                         // Let the crappy if statement begin!!!
                         if (modelType.indexOf("portfolioitem") >= 0) {
-                          if (parentType) {
-                            console.log("The Parent type is", parentType);
+                          if (typeof parentType !== "undefined") {
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: "Parent",
                               operator: "=",
                               value: parentRef
                             });
                           } else {
-                            query = Ext.create("Rally.data.QueryFilter", {
-                              property: "ObjectID",
-                              operator: "!=",
-                              value: "0"
-                            });
+                            query = null;
                           }
                         } else if (modelType === "hierarchicalrequirement") {
                           //console.log("Create Query for Stories");
@@ -460,8 +455,6 @@
                         ssClone.convert = function (v, rec) {
                           if (rec.raw._type.toLowerCase() === "task") {
                             return rec.get("State");
-                          } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
-                            return rec.get("State")._refObjectName;
                           } else if (rec.raw.hasOwnProperty("ScheduleState")) {
                             return rec.get("ScheduleState");
                           } else {
@@ -649,9 +642,7 @@
                   messageable: "Rally.Messageable"
                 },
             
-                plugins: [
-                  { ptype: "rallyrefreshviewoncolumnchangeplugin" }
-                ],
+                plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
             
                 config: {
                   width: "100%",
@@ -665,11 +656,9 @@
                   lines: false,
             
                   viewConfig: {
-                    toggleOnDblClick: false,
-                    plugins: [
-                      { ptype: 'treeviewdragdrop' }
-                    ]
-                  }
+                		toggleOnDblClick: false,
+                		plugins: { ptype: 'treeviewdragdrop' }
+                	}
             
                 },
             
@@ -697,8 +686,6 @@
                       config.columns = config.columns.concat(autoGenColumns);
                     }
                   }
-            
-                  this.plugins.push({ ptype: "rallycellediting", messageBus: this._getMessageBus() });
             
                   delete config.models;
                   delete config.columCfgs;
@@ -987,112 +974,6 @@
               });
             
             }(this));
-            (function() {
-                var Ext = window.Ext4 || window.Ext;
-            
-                /**
-                 * The Ext.XTemplate used to render State fields, like user story ScheduleState and portfolio item State.
-                 */
-                Ext.define('Rally.ui.renderer.template.ScheduleStateTemplate2', {
-                    requires: [],
-                    extend: 'Ext.XTemplate',
-            
-                    config: {
-                        /**
-                         * @cfg {String} width define a width if necessary to fit where it's being used
-                         */
-                        width: '100%',
-            
-                        /**
-                         * @cfg {Ext.data.Field} (required)
-                         * The state field on the model. E.g., ScheduleState field on the user story model.
-                         */
-                        field: undefined
-                    },
-            
-                    constructor: function(config) {
-                        this.initConfig(config);
-                        var me = this;
-            
-                        var templateConfig = [
-                            '<div class="schedule-state-wrapper {[this._addClsIfEditable(values)]}" style="width: {[this._getWidth()]}">',
-                                '{[this._renderStates(values)]}',
-                            '</div>',
-                            {
-                                _renderStates: function(recordData){
-                                    return me.renderStates(recordData);
-                                },
-                                _getWidth: function(){
-                                    return me.getWidth();
-                                },
-                                _addClsIfEditable: function(recordData) {
-                                    return recordData.updatable ?  'field-editable' : '';
-                                }
-                            }
-                        ];
-            
-                        return this.callParent(templateConfig);
-            
-                    },
-            
-                    renderStates: function(recordData) {
-                        var type = recordData._type.toLowerCase();
-            
-                        console.log("Template Record Data", arguments);
-            
-                        //if (type === "hierarchicalrequirement") {
-                        //} else if (type === "task") {
-                        //} else {
-                          //return "";
-                        //}
-            
-                        var stateUsed = true;
-                        var returnVal = [];
-                        var states = Ext.Array.pluck(this.getField().allowedValues, 'StringValue');
-                        var currentState = recordData[this.getField().name];
-                        var blocked = recordData.Blocked;
-            
-                        var blockWidth = Math.floor((95/(states.length))-3);
-            
-                        Ext.each(states, function(state, index) {
-                            //don't add spacer at the front
-                            if(index !== 0 ) {
-                                returnVal.push('<span class="schedule-state-spacer');
-            
-                                //make spacer blue if it's between selected states
-                                if(stateUsed) {
-                                    returnVal.push(blocked ? ' blocked' : ' selected');
-                                }
-            
-                                returnVal.push('"></span>');
-                            }
-            
-                            //render an individual state block
-                            returnVal.push('<div class="schedule-state');
-            
-                            if(stateUsed) {
-                                returnVal.push(blocked ? ' blocked' : ' selected');
-                            }
-            
-                            returnVal.push('" style="width:' + blockWidth + '%">&nbsp;</div>');
-            
-                            //flip the switch so remaining states are gray
-                            if(state === currentState) {
-                                stateUsed = false;
-                            }
-                        });
-            
-                        returnVal.push('<div class="statename ellipses">');
-                        returnVal.push(currentState);
-                        returnVal.push('</div>');
-            
-            
-                        return returnVal.join('');
-                    }
-            
-                });
-            
-            })();
             (function (global) {
             
               Ext.override(Rally.env.Server, {
@@ -1101,241 +982,50 @@
                 }
               });
             
-              var defaultFilterFn = function () { return true; };
-            
-              var renderTask = function renderTask(p, val, __, rec) {
-                if (rec && rec.get) {
-                  if (rec.raw._type.toLowerCase() !== "task") {
-                    if (rec.raw.hasOwnProperty(p)) {
-                      return rec.raw[p];
-                    }
-                  }
-                }
-            
-                return val;
-              };
-            
               Ext.define('CustomApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
             
-                childTypes: {
-                  defect: false,
-                  task: false,
-                  testcase: false
-                },
-            
-                mixins: {
-                  maskable: "Rally.ui.mask.Maskable"
-                },
-            
-                loading: null,
-            
-                filterFn: defaultFilterFn,
-            
                 launch: function() {
-                  var me = this;
-            
-                  //me.loading = new Ext.LoadMask(me.up("dashboard-container"), {msg: "Loading..."});
-                  me.maskTarget = me.el;
-            
-                  me.showLoading();
-            
-                  me.add(Ext.create("Ext.Panel", {
-                    border: false,
-                    layout: 'anchor',
-                    margin: '15 0 0 0',
-                    padding: '0 0 0 0',
-                    height: 45,
-                    width: '100%',
-                    items: [
-                      //{
-                        //anchor: '100% 45',
-                        //items: [
-                      {
-                        width: '100%',
-                        anchor: '100% 45',
-                        //height: 35,
-                        border: false,
-                        layout: 'hbox',
-                        items: [
-                          {
-                            xtype: 'tbspacer',
-                            flex: 1
-                            //width: 200
-                          },
-                          me._createTypeSelector(), {
-                            xtype: 'tbspacer',
-                            width: 10
-                          }
-                        ]
-                    //}]
-                        }]
-                  }));
-            
-                  //me.add(me._createTypeChoices());
-            
-                },
-            
-                showLoading: function() {
-                  var me = this;
-            
-                  me.showMask("Loading...");
-                },
-            
-                hideLoading: function() {
-                  var me = this;
-            
-                  me.hideMask();
-                },
-            
-                _createTypeSelector: function _createViewSelector() {
-                  var cb = Ext.create("Rally.ui.combobox.PortfolioItemTypeComboBox", {});
-            
-                  cb.on("change", this._applyFilter, this);
-            
-                  return cb;
-                },
-            
-                _applyFilter: function _applyFilter(sender, newVal, oldVal, eOpts) {
-                  var i, ii;
-                  var me = this;
-            
-                  this._types = [];
-                  
-                  for (i = 0, ii = sender.store.data.items.length; i < ii; i++) {
-                    this._types.push(sender.store.data.items[i].data.TypePath.toLowerCase());
-                  }
-            
-                  this._types.splice(0, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
-            
-                  console.log("Apply Filter", newVal, oldVal);
-                  console.log("Foo", this._types, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
-            
-                  this._types.push("hierarchicalrequirement");
-                  this._types.push("task");
-                  this._types.push("defect");
-            
-                  newVal = sender.valueModels[0].data;
-            
-                  me.showLoading();
-            
-                  if (this._treePanel) {
-                    this.remove(this._treePanel);
-                  }
-            
-                  Rally.data.TreeModelFactory.getModel({
-                    type: newVal.TypePath,
-                    success: function modelSuccess(model) {
-                      me.model = model;
-                      
-                      var ssf, i, ii, f = model.getFields();
-            
-                      for (i = 0, ii = f.length; i < ii; i++) {
-                        if (f[i].name === "UnifiedState") {
-                          ssf = f[i];
-                          break;
-                        }
-                      }
-            
-                      me._ssf = ssf;
-            
-                      var doLoad = function(childModels) {
-                        console.log("Child models", childModels);
-                        me.store = Ext.create('Rally.data.WsapiTreeStore', {
-                          topLevelModels: [ newVal.TypePath ],
-                          childModels: childModels
-                        });
-            
-                        me._onLoadData(newVal);
-                      };
-            
-                      var childModels = me._types;
-            
-                      //for (i in me.childTypes) {
-                        //if (me.childTypes.hasOwnProperty(i)) {
-                          //if (me.childTypes[i]) {
-                            //childModels.push(i);
-                          //}
-                        //}
-                      //}
-                      doLoad(childModels);
-                    }
+                  var store = Ext.create('Rally.data.WsapiTreeStore', {
+                    topLevelModels: ['portfolioitem/release' ],
+                    childModels: ['portfolioitem/initiative',
+                      'portfolioitem/capability', 'portfolioitem/feature', 'hierarchicalrequirement', 'task']
                   });
-                },
             
-                _onLoadData: function _onLoadData(newVal) {
-                  var me = this;
-            
-                  console.log("Loading data", newVal);
-            
-                  me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
-                    store: me.store,
-                    models: [me.model],
+                  this.add(Ext.create('Rally.ui.tree.grid.Panel', {
+                    store: store,
                     dockedItems: [{
                       xtype: 'rallypagingtoolbar',
-                      store: me.store,   // same store TreeGridPanel is using
+                      store: store,   // same store TreeGridPanel is using
                       dock: 'bottom',
-                      displayInfo: true,
-                      listeners: {
-                        beforechange: function () {
-                          this.showLoading();
-                        },
-                        scope: me
-                      }
+                      displayInfo: true
                     }],
-                    listeners: {
-                      load: function() { me.hideLoading(); }
-                    },
-                    columnCfgs: [
-                      "Name",
-                      "Release",
-                      "Iteration",
-                      "ScheduleState",
-                      "PlanEstimate",
-                      {
-                        text: 'Task Est.',
-                        dataIndex: 'Estimate',
-                        renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
-                        flex: 1,
-                        hidden: true
-                      },
-                      {
-                        text: 'To Do',
-                        dataIndex: 'ToDo',
-                        renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
-                        flex: 1,
-                        hidden: true
-                      }, {
-                        xtype: 'templatecolumn',
-                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
-                        text: '% Done By Plan Estimate',
-                        dataIndex: 'PercentDoneByPlanEstimate',
-                        flex: 1
-                      }, {
-                        xtype: 'templatecolumn',
-                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
-                        text: '% Done By Story Count',
-                        dataIndex: 'PercentDoneByStoryCount',
-                        flex: 1
-                      }, 
-                      "PrelimenaryEstimate",
-                      "PlannedStartDate",
-                      "PlannedEndDate",
-                      "ValueScore",
-                      "RiskScore",
-                      {
-                        xtype: 'templatecolumn',
-                        tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate2', {field: me._ssf}),
-                        text: 'State',
-                        flex: 1
-                      }
-                    ]
-            
-                  });
-            
-                  me._treePanel.on("load", function() { me.hideLoading(); });
-                  me.add(me._treePanel);
+                    columns: [{
+                      xtype: 'treecolumn',
+                      text: 'Name',
+                      dataIndex: 'Name',
+                      flex: 2
+                    }, {
+                      xtype: 'templatecolumn',
+                      tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+                      text: '% Done by Plan Est',
+                      dataIndex: 'PercentDoneByPlanEstimate',
+                      flex: 1
+                    }, {
+                      text: 'Schedule State',
+                      dataIndex: 'ScheduleState',
+                      flex: 1
+                    }, {
+                      text: 'Est. Hours',
+                      dataIndex: 'Estimate',
+                      flex: 1
+                    }, {
+                      text: 'Remaining',
+                      dataIndex: 'ToDo',
+                      flex: 1
+                    }]
+                  }));
                 }
               });
             }(this));

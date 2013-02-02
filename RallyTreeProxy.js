@@ -151,6 +151,9 @@
 
           data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
           data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
+          if (data[i].data.href.indexOf("#") !== 1) {
+            data[i].data.href = "/#" + data[i].data.href;
+          }
           data[i].data.hrefTarget = "_top";
 
           if (this.filterFn(data[i])) {

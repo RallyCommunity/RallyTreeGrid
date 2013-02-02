@@ -10,6 +10,7 @@
         "RallyTreeDataStore.js",
         "RallyTreeGrid.js",
         "ModifiedPercentDone.js",
+        "ModifiedScheduledStateTemplate.js",
         "App.js"
     ],
     "css": [

@@ -47,7 +47,9 @@
       messageable: "Rally.Messageable"
     },
 
-    plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
+    plugins: [
+      { ptype: "rallyrefreshviewoncolumnchangeplugin" }
+    ],
 
     config: {
       width: "100%",
@@ -61,9 +63,11 @@
       lines: false,
 
       viewConfig: {
-    		toggleOnDblClick: false,
-    		plugins: { ptype: 'treeviewdragdrop' }
-    	}
+        toggleOnDblClick: false,
+        plugins: [
+          { ptype: 'treeviewdragdrop' }
+        ]
+      }
 
     },
 
@@ -91,6 +95,8 @@
           config.columns = config.columns.concat(autoGenColumns);
         }
       }
+
+      //this.plugins.push({ ptype: "rallycellediting", messageBus: this._getMessageBus() });
 
       delete config.models;
       delete config.columCfgs;

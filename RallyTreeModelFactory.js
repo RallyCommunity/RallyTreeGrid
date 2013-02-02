@@ -86,14 +86,19 @@
 
             // Let the crappy if statement begin!!!
             if (modelType.indexOf("portfolioitem") >= 0) {
-              if (typeof parentType !== "undefined") {
+              if (parentType) {
+                console.log("The Parent type is", parentType);
                 query = Ext.create("Rally.data.QueryFilter", {
                   property: "Parent",
                   operator: "=",
                   value: parentRef
                 });
               } else {
-                query = null;
+                query = Ext.create("Rally.data.QueryFilter", {
+                  property: "ObjectID",
+                  operator: "!=",
+                  value: "0"
+                });
               }
             } else if (modelType === "hierarchicalrequirement") {
               //console.log("Create Query for Stories");
@@ -224,12 +229,14 @@
             ssClone.convert = function (v, rec) {
               if (rec.raw._type.toLowerCase() === "task") {
                 return rec.get("State");
+              } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
+                return rec.get("State")._refObjectName;
               } else if (rec.raw.hasOwnProperty("ScheduleState")) {
                 return rec.get("ScheduleState");
               } else {
                 return "";
               }
-            }
+            };
           }
         }
 
