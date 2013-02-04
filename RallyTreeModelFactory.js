@@ -25,6 +25,39 @@
 
     },
 
+    getModels: function getModels(options) {
+      var me = this,
+          cb = options.success || function noop() {},
+          canExpandFn = options.canExpandFn,
+          buildParentQueryFn = options.buildParentQueryFn;
+
+      delete options.canExpandFn;
+      delete options.buildParentQueryFn;
+
+      console.log("Getting Models");
+      options.success = function onTreeModelSuccess(models) {
+        var treeModels = {},
+            modelName;
+        
+        console.log("The models", models);
+        for (modelName in models) {
+          if (models.hasOwnProperty(modelName)) {
+            treeModels[modelName] = 
+              me.createTreeModel(models[modelName], 
+                                 {canExpand: canExpandFn, buildParentQueryFn: buildParentQueryFn});
+
+            
+          }
+        }
+
+        cb(treeModels);
+      };
+
+      //debugger;
+
+      Rally.data.ModelFactory.getModels(options);
+    },
+
     createTreeModel: function createTreeModel(baseModel, options) {
         var o = {},
             canExpandFn = options.canExpandFn,
@@ -208,14 +241,15 @@
 
         Ext.data.NodeInterface.decorate(treeModel);
 
-        var i = 0, fields = treeModel.getFields(), ii = fields.length, ssClone;
+        var i, ii, fields = treeModel.getFields(), ssClone;
 
-        for (; i < ii; i++) {
+        var canExpandConvert = function canExpandConvert(v, rec) {
+          return !rec.self.canExpandFn(rec);
+        };
+
+        for (i = 0, ii = fields.length; i < ii; i++) {
           if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
-            fields[i].convert = function (v, rec) {
-              return !rec.self.canExpandFn(rec);
-              //return false;
-            };
+            fields[i].convert = canExpandConvert;
           }
 
           if ({ScheduleState: 1, State: 1}.hasOwnProperty(fields[i].name)) {
@@ -230,7 +264,11 @@
               if (rec.raw._type.toLowerCase() === "task") {
                 return rec.get("State");
               } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
-                return rec.get("State")._refObjectName;
+                if (rec.get("State")) {
+                  return rec.get("State")._refObjectName;
+                }
+
+                return "";
               } else if (rec.raw.hasOwnProperty("ScheduleState")) {
                 return rec.get("ScheduleState");
               } else {

@@ -41,7 +41,6 @@
     launch: function() {
       var me = this;
 
-      //me.loading = new Ext.LoadMask(me.up("dashboard-container"), {msg: "Loading..."});
       me.maskTarget = me.el;
 
       me.showLoading();
@@ -54,32 +53,23 @@
         height: 45,
         width: '100%',
         items: [
-          //{
-            //anchor: '100% 45',
-            //items: [
           {
             width: '100%',
             anchor: '100% 45',
-            //height: 35,
             border: false,
             layout: 'hbox',
             items: [
               {
                 xtype: 'tbspacer',
                 flex: 1
-                //width: 200
               },
               me._createTypeSelector(), {
                 xtype: 'tbspacer',
                 width: 10
               }
             ]
-        //}]
             }]
       }));
-
-      //me.add(me._createTypeChoices());
-
     },
 
     showLoading: function() {
@@ -97,9 +87,45 @@
     _createTypeSelector: function _createViewSelector() {
       var cb = Ext.create("Rally.ui.combobox.PortfolioItemTypeComboBox", {});
 
-      cb.on("change", this._applyFilter, this);
+      cb.on("ready", function(value) { 
+        console.log("Loaded", arguments); 
+        cb.on("change", this._applyFilter, this);
+        this._applyFilter(cb, value);
+      }, this);
 
       return cb;
+    },
+
+    _createTypeToStateFieldMap: function _createTypeToStateFieldMap(model) {
+      console.dir(model);
+
+      var type = model.superclass.self.typePath.toLowerCase();
+      var stateToFind = null;
+      var ssf = null,
+          i, ii,
+          f;
+
+      if (type.indexOf("portfolioitem/") >= 0) {
+        stateToFind = "State";
+      } else if ((type === "hierarchicalrequirement") || (type === "defect")) {
+        stateToFind = "ScheduleState";
+      } else if (type === "task") {
+        stateToFind = "State";
+      }
+
+      if (stateToFind === null) {
+        return null;
+      }
+
+      f = model.getFields();
+      for (i = 0, ii = f.length; i < ii; i++) {
+        if (f[i].name === stateToFind) {
+          ssf = f[i];
+          break;
+        }
+      }
+
+      return ssf;
     },
 
     _applyFilter: function _applyFilter(sender, newVal, oldVal, eOpts) {
@@ -107,19 +133,22 @@
       var me = this;
 
       this._types = [];
+      this._childTypes = [];
       
       for (i = 0, ii = sender.store.data.items.length; i < ii; i++) {
         this._types.push(sender.store.data.items[i].data.TypePath.toLowerCase());
+        this._childTypes.push(sender.store.data.items[i].data.TypePath.toLowerCase());
       }
-
-      this._types.splice(0, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
-
-      console.log("Apply Filter", newVal, oldVal);
-      console.log("Foo", this._types, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
 
       this._types.push("hierarchicalrequirement");
       this._types.push("task");
       this._types.push("defect");
+
+      this._childTypes.push("hierarchicalrequirement");
+      this._childTypes.push("task");
+      this._childTypes.push("defect");
+
+      this._childTypes.splice(0, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
 
       newVal = sender.valueModels[0].data;
 
@@ -129,42 +158,33 @@
         this.remove(this._treePanel);
       }
 
-      Rally.data.TreeModelFactory.getModel({
-        type: newVal.TypePath,
-        success: function modelSuccess(model) {
-          me.model = model;
-          
-          var ssf, i, ii, f = model.getFields();
+      Rally.data.TreeModelFactory.getModels({
+        types: me._types,
+        success: function modelSuccess(models) {
+          var m;
 
-          for (i = 0, ii = f.length; i < ii; i++) {
-            if (f[i].name === "UnifiedState") {
-              ssf = f[i];
-              break;
+          me._stateFields = {};
+          me.model = models[newVal.TypePath.toLowerCase()];
+
+          for (m in models) {
+            if (models.hasOwnProperty(m)) {
+              me._stateFields[m] = me._createTypeToStateFieldMap(models[m]);
             }
           }
 
-          me._ssf = ssf;
+          console.dir(me._stateFields);
 
           var doLoad = function(childModels) {
             console.log("Child models", childModels);
             me.store = Ext.create('Rally.data.WsapiTreeStore', {
-              topLevelModels: [ newVal.TypePath ],
+              topLevelModels: [ newVal.TypePath.toLowerCase() ],
               childModels: childModels
             });
 
             me._onLoadData(newVal);
           };
 
-          var childModels = me._types;
-
-          //for (i in me.childTypes) {
-            //if (me.childTypes.hasOwnProperty(i)) {
-              //if (me.childTypes[i]) {
-                //childModels.push(i);
-              //}
-            //}
-          //}
-          doLoad(childModels);
+          doLoad(me._childTypes);
         }
       });
     },
@@ -230,9 +250,18 @@
           "ValueScore",
           "RiskScore",
           {
-            xtype: 'templatecolumn',
-            tpl: Ext.create('Rally.ui.renderer.template.ScheduleStateTemplate2', {field: me._ssf}),
             text: 'State',
+            renderer: function (value, metaData, record) {
+              console.log("Renderer", arguments);
+              var type = record.data._type.toLowerCase();
+              var res = "";
+             
+              res = me._stateFields[type].renderTpl.apply(record.data);
+
+              console.log(res);
+
+              return res;
+            },
             flex: 1
           }
         ]

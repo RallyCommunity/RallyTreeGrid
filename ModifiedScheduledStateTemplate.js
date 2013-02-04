@@ -18,7 +18,7 @@
              * @cfg {Ext.data.Field} (required)
              * The state field on the model. E.g., ScheduleState field on the user story model.
              */
-            field: undefined
+            fields: undefined
         },
 
         constructor: function(config) {
@@ -49,7 +49,7 @@
         renderStates: function(recordData) {
             var type = recordData._type.toLowerCase();
 
-            console.log("Template Record Data", arguments);
+            console.log("Template Record Data", recordData);
 
             //if (type === "hierarchicalrequirement") {
             //} else if (type === "task") {
@@ -59,8 +59,8 @@
 
             var stateUsed = true;
             var returnVal = [];
-            var states = Ext.Array.pluck(this.getField().allowedValues, 'StringValue');
-            var currentState = recordData[this.getField().name];
+            var states = Ext.Array.pluck(this.getFields().allowedValues, 'StringValue');
+            var currentState = recordData[this.getFields().name];
             var blocked = recordData.Blocked;
 
             var blockWidth = Math.floor((95/(states.length))-3);
