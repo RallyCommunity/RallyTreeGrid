@@ -2,7 +2,7 @@
 
   Ext.override(Rally.env.Server, {
     getWsapiUrl: function(version) {
-      return this.getContextUrl() + "/webservice/1.37";
+      return this.getContextUrl() + "/webservice/1.39";
     }
   });
 
@@ -88,7 +88,7 @@
       var cb = Ext.create("Rally.ui.combobox.PortfolioItemTypeComboBox", {});
 
       cb.on("ready", function(value) { 
-        console.log("Loaded", arguments); 
+        //console.log("Loaded", arguments); 
         cb.on("change", this._applyFilter, this);
         this._applyFilter(cb, value);
       }, this);
@@ -97,7 +97,7 @@
     },
 
     _createTypeToStateFieldMap: function _createTypeToStateFieldMap(model) {
-      console.dir(model);
+      //console.dir(model);
 
       var type = model.superclass.self.typePath.toLowerCase();
       var stateToFind = null;
@@ -172,10 +172,10 @@
             }
           }
 
-          console.dir(me._stateFields);
+          //console.dir(me._stateFields);
 
           var doLoad = function(childModels) {
-            console.log("Child models", childModels);
+            //console.log("Child models", childModels);
             me.store = Ext.create('Rally.data.WsapiTreeStore', {
               topLevelModels: [ newVal.TypePath.toLowerCase() ],
               childModels: childModels
@@ -192,7 +192,7 @@
     _onLoadData: function _onLoadData(newVal) {
       var me = this;
 
-      console.log("Loading data", newVal);
+      //console.log("Loading data", newVal);
 
       me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
         store: me.store,
@@ -252,13 +252,13 @@
           {
             text: 'State',
             renderer: function (value, metaData, record) {
-              console.log("Renderer", arguments);
+              //console.log("Renderer", arguments);
               var type = record.data._type.toLowerCase();
               var res = "";
              
               res = me._stateFields[type].renderTpl.apply(record.data);
 
-              console.log(res);
+              //console.log(res);
 
               return res;
             },

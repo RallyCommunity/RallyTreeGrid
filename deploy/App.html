@@ -197,7 +197,7 @@
                   //return {buildExtractors: function() {}};
                 //}
               });
-            })(this);
+            }(this));
             (function (global) {
               var trm = Ext.define("Rally.data.TreeRootModel", {
                 requires: [
@@ -228,7 +228,7 @@
               });
             
               Ext.data.NodeInterface.decorate(trm);
-            })(this);
+            }(this));
             (function(global) {
             
               Ext.define('Rally.data.TreeModelFactory', {
@@ -265,12 +265,12 @@
                   delete options.canExpandFn;
                   delete options.buildParentQueryFn;
             
-                  console.log("Getting Models");
+                  //console.log("Getting Models");
                   options.success = function onTreeModelSuccess(models) {
                     var treeModels = {},
                         modelName;
                     
-                    console.log("The models", models);
+                    //console.log("The models", models);
                     for (modelName in models) {
                       if (models.hasOwnProperty(modelName)) {
                         treeModels[modelName] = 
@@ -351,7 +351,7 @@
                         // Let the crappy if statement begin!!!
                         if (modelType.indexOf("portfolioitem") >= 0) {
                           if (parentType) {
-                            console.log("The Parent type is", parentType);
+                            //console.log("The Parent type is", parentType);
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: "Parent",
                               operator: "=",
@@ -517,7 +517,7 @@
                 }
               });
             
-            })(this);
+            }(this));
             (function (global) {
               var totalProcessed = 0;
             
@@ -625,7 +625,7 @@
                 },
             
                 nextPage: function nextPage(options) {
-                  this.loadPage(this.currentPage + 1), options;
+                  this.loadPage(this.currentPage + 1, options);
                 },
             
                 previousPage: function previousPage(options) {
@@ -639,6 +639,12 @@
               });
             }(this));
             (function (global) {
+              var appID = window.location.hash.split("/")[4];
+              
+              if (!appID) {
+                appID = "0000000";
+              }
+            
               Ext.tree.ViewDropZone.prototype.getPosition = function(e, node) {
                   var view = this.view,
                       record = view.getRecord(node),
@@ -700,6 +706,10 @@
             
                   rootVisible: false,
             
+                  stateful: true,
+            
+                  stateId: "ruitreegridpanel." + appID,
+            
                   lines: false,
             
                   viewConfig: {
@@ -731,7 +741,7 @@
                         .shouldAutoAddAllModelFieldsAsColumns(true)
                         .build(config.models[i].superclass);
             
-                      console.log("Auto Columns", autoGenColumns);
+                      //console.log("Auto Columns", autoGenColumns);
                       config.columns = config.columns.concat(autoGenColumns);
                     }
                   }
@@ -741,10 +751,10 @@
                   delete config.models;
                   delete config.columCfgs;
             
-                  console.log("Column Config", config.columns);
+                  //console.log("Column Config", config.columns);
                   me.callParent(arguments);
             
-                  console.log("Version", Ext.getVersion().version);
+                  //console.log("Version", Ext.getVersion().version);
             
                   me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
                   me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
@@ -752,7 +762,7 @@
             
             
                 _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
-                  console.log("Can Drag Drop", arguments);
+                  //console.log("Can Drag Drop", arguments);
             
                   var rec = dragData.records[0],
                       targetType,
@@ -799,7 +809,7 @@
                 },
             
                 _onBeforeDrop: function _onBeforeDrop(elt, data, overModel, dropPosition, dropFunciton, eOpts) {
-                  console.log("On Before Drop", arguments);
+                  //console.log("On Before Drop", arguments);
                   var success = false;
             
                   if (dropPosition === "append") {
@@ -836,7 +846,7 @@
                       success = success && this._doReparentTA(overModel, recs[i]);
                     } else {
                       success = false; // I don't know what you are
-                      console.log("Don't know how to reparent this model", recs[i]);
+                      //console.log("Don't know how to reparent this model", recs[i]);
                     }
                   }
             
@@ -914,7 +924,7 @@
                     childModel.save();
                     return true;
                   } else if (parentType === "defectsuite") {
-                    childMode.set("DefectSuite", parentModel.raw._ref);
+                    childModel.set("DefectSuite", parentModel.raw._ref);
                     childModel.save();
                     return true;
                   }
@@ -923,7 +933,7 @@
                 },
             
                 _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
-                  console.log("ReRank", arguments);
+                  //console.log("ReRank", arguments);
             
                   var rankType = dropPosition === "after" ? "rankBelow" : "rankAbove",
                       params = {};
@@ -957,17 +967,13 @@
                      * @cfg {String} percentDoneName sometimes it's necessary to name the variable used as the percent done replacement in the template,
                      * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
                      */
+                    percentDoneName: "PercentDoneByStoryPlanEstimate",
+            
                     /**
                      * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.
                      * Defaults to:
                      *      function(){ return false; }
                      */
-                    showDangerNotificationFn: function() {
-                      return false;
-                    },
-            
-                    percentDoneName: "PercentDoneByStoryPlanEstimate",
-            
                     showDangerNotificationFn: function (recordData) {
                       return (!recordData.PlannedEndDate && !recordData.ActualEndDate) || recordData.UnEstimatedLeafStoryCount > 0;
                     },
@@ -1025,117 +1031,11 @@
               });
             
             }(this));
-            (function() {
-                var Ext = window.Ext4 || window.Ext;
-            
-                /**
-                 * The Ext.XTemplate used to render State fields, like user story ScheduleState and portfolio item State.
-                 */
-                Ext.define('Rally.ui.renderer.template.ScheduleStateTemplate2', {
-                    requires: [],
-                    extend: 'Ext.XTemplate',
-            
-                    config: {
-                        /**
-                         * @cfg {String} width define a width if necessary to fit where it's being used
-                         */
-                        width: '100%',
-            
-                        /**
-                         * @cfg {Ext.data.Field} (required)
-                         * The state field on the model. E.g., ScheduleState field on the user story model.
-                         */
-                        fields: undefined
-                    },
-            
-                    constructor: function(config) {
-                        this.initConfig(config);
-                        var me = this;
-            
-                        var templateConfig = [
-                            '<div class="schedule-state-wrapper {[this._addClsIfEditable(values)]}" style="width: {[this._getWidth()]}">',
-                                '{[this._renderStates(values)]}',
-                            '</div>',
-                            {
-                                _renderStates: function(recordData){
-                                    return me.renderStates(recordData);
-                                },
-                                _getWidth: function(){
-                                    return me.getWidth();
-                                },
-                                _addClsIfEditable: function(recordData) {
-                                    return recordData.updatable ?  'field-editable' : '';
-                                }
-                            }
-                        ];
-            
-                        return this.callParent(templateConfig);
-            
-                    },
-            
-                    renderStates: function(recordData) {
-                        var type = recordData._type.toLowerCase();
-            
-                        console.log("Template Record Data", recordData);
-            
-                        //if (type === "hierarchicalrequirement") {
-                        //} else if (type === "task") {
-                        //} else {
-                          //return "";
-                        //}
-            
-                        var stateUsed = true;
-                        var returnVal = [];
-                        var states = Ext.Array.pluck(this.getFields().allowedValues, 'StringValue');
-                        var currentState = recordData[this.getFields().name];
-                        var blocked = recordData.Blocked;
-            
-                        var blockWidth = Math.floor((95/(states.length))-3);
-            
-                        Ext.each(states, function(state, index) {
-                            //don't add spacer at the front
-                            if(index !== 0 ) {
-                                returnVal.push('<span class="schedule-state-spacer');
-            
-                                //make spacer blue if it's between selected states
-                                if(stateUsed) {
-                                    returnVal.push(blocked ? ' blocked' : ' selected');
-                                }
-            
-                                returnVal.push('"></span>');
-                            }
-            
-                            //render an individual state block
-                            returnVal.push('<div class="schedule-state');
-            
-                            if(stateUsed) {
-                                returnVal.push(blocked ? ' blocked' : ' selected');
-                            }
-            
-                            returnVal.push('" style="width:' + blockWidth + '%">&nbsp;</div>');
-            
-                            //flip the switch so remaining states are gray
-                            if(state === currentState) {
-                                stateUsed = false;
-                            }
-                        });
-            
-                        returnVal.push('<div class="statename ellipses">');
-                        returnVal.push(currentState);
-                        returnVal.push('</div>');
-            
-            
-                        return returnVal.join('');
-                    }
-            
-                });
-            
-            })();
             (function (global) {
             
               Ext.override(Rally.env.Server, {
                 getWsapiUrl: function(version) {
-                  return this.getContextUrl() + "/webservice/1.37";
+                  return this.getContextUrl() + "/webservice/1.39";
                 }
               });
             
@@ -1221,7 +1121,7 @@
                   var cb = Ext.create("Rally.ui.combobox.PortfolioItemTypeComboBox", {});
             
                   cb.on("ready", function(value) { 
-                    console.log("Loaded", arguments); 
+                    //console.log("Loaded", arguments); 
                     cb.on("change", this._applyFilter, this);
                     this._applyFilter(cb, value);
                   }, this);
@@ -1230,7 +1130,7 @@
                 },
             
                 _createTypeToStateFieldMap: function _createTypeToStateFieldMap(model) {
-                  console.dir(model);
+                  //console.dir(model);
             
                   var type = model.superclass.self.typePath.toLowerCase();
                   var stateToFind = null;
@@ -1305,10 +1205,10 @@
                         }
                       }
             
-                      console.dir(me._stateFields);
+                      //console.dir(me._stateFields);
             
                       var doLoad = function(childModels) {
-                        console.log("Child models", childModels);
+                        //console.log("Child models", childModels);
                         me.store = Ext.create('Rally.data.WsapiTreeStore', {
                           topLevelModels: [ newVal.TypePath.toLowerCase() ],
                           childModels: childModels
@@ -1325,7 +1225,7 @@
                 _onLoadData: function _onLoadData(newVal) {
                   var me = this;
             
-                  console.log("Loading data", newVal);
+                  //console.log("Loading data", newVal);
             
                   me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
                     store: me.store,
@@ -1385,13 +1285,13 @@
                       {
                         text: 'State',
                         renderer: function (value, metaData, record) {
-                          console.log("Renderer", arguments);
+                          //console.log("Renderer", arguments);
                           var type = record.data._type.toLowerCase();
                           var res = "";
                          
                           res = me._stateFields[type].renderTpl.apply(record.data);
             
-                          console.log(res);
+                          //console.log(res);
             
                           return res;
                         },

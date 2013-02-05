@@ -34,12 +34,12 @@
       delete options.canExpandFn;
       delete options.buildParentQueryFn;
 
-      console.log("Getting Models");
+      //console.log("Getting Models");
       options.success = function onTreeModelSuccess(models) {
         var treeModels = {},
             modelName;
         
-        console.log("The models", models);
+        //console.log("The models", models);
         for (modelName in models) {
           if (models.hasOwnProperty(modelName)) {
             treeModels[modelName] = 
@@ -120,7 +120,7 @@
             // Let the crappy if statement begin!!!
             if (modelType.indexOf("portfolioitem") >= 0) {
               if (parentType) {
-                console.log("The Parent type is", parentType);
+                //console.log("The Parent type is", parentType);
                 query = Ext.create("Rally.data.QueryFilter", {
                   property: "Parent",
                   operator: "=",
@@ -286,4 +286,4 @@
     }
   });
 
-})(this);
+}(this));

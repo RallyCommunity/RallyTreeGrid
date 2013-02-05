@@ -4,11 +4,10 @@
     <title>TreeGrid</title>
 
     <script type="text/javascript"
-src="/apps/2.0p3/sdk-debug.js?wsapiVersion=1.37"></script>
+src="https://rally1.rallydev.com/apps/2.0p3/sdk.js?wsapiVersion=1.37"></script>
 
     <script type="text/javascript">
-if (typeof window.console === "undefined") window.console = { log: function () {} };
-
+        var appID = window.location.hash.split("/")[4];
         Rally.onReady(function() {
             (function (global) {
               Ext.define("Rally.data.WsapiTreeProxy", {
@@ -163,6 +162,9 @@ if (typeof window.console === "undefined") window.console = { log: function () {
             
                       data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
                       data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
+                      if (data[i].data.href.indexOf("#") !== 1) {
+                        data[i].data.href = "/#" + data[i].data.href;
+                      }
                       data[i].data.hrefTarget = "_top";
             
                       if (this.filterFn(data[i])) {
@@ -197,7 +199,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                   //return {buildExtractors: function() {}};
                 //}
               });
-            })(this);
+            }(this));
             (function (global) {
               var trm = Ext.define("Rally.data.TreeRootModel", {
                 requires: [
@@ -228,7 +230,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
               });
             
               Ext.data.NodeInterface.decorate(trm);
-            })(this);
+            }(this));
             (function(global) {
             
               Ext.define('Rally.data.TreeModelFactory', {
@@ -254,6 +256,39 @@ if (typeof window.console === "undefined") window.console = { log: function () {
             
                   Rally.data.ModelFactory.getModel(options);
             
+                },
+            
+                getModels: function getModels(options) {
+                  var me = this,
+                      cb = options.success || function noop() {},
+                      canExpandFn = options.canExpandFn,
+                      buildParentQueryFn = options.buildParentQueryFn;
+            
+                  delete options.canExpandFn;
+                  delete options.buildParentQueryFn;
+            
+                  //console.log("Getting Models");
+                  options.success = function onTreeModelSuccess(models) {
+                    var treeModels = {},
+                        modelName;
+                    
+                    //console.log("The models", models);
+                    for (modelName in models) {
+                      if (models.hasOwnProperty(modelName)) {
+                        treeModels[modelName] = 
+                          me.createTreeModel(models[modelName], 
+                                             {canExpand: canExpandFn, buildParentQueryFn: buildParentQueryFn});
+            
+                        
+                      }
+                    }
+            
+                    cb(treeModels);
+                  };
+            
+                  //debugger;
+            
+                  Rally.data.ModelFactory.getModels(options);
                 },
             
                 createTreeModel: function createTreeModel(baseModel, options) {
@@ -317,14 +352,19 @@ if (typeof window.console === "undefined") window.console = { log: function () {
             
                         // Let the crappy if statement begin!!!
                         if (modelType.indexOf("portfolioitem") >= 0) {
-                          if (typeof parentType !== "undefined") {
+                          if (parentType) {
+                            //console.log("The Parent type is", parentType);
                             query = Ext.create("Rally.data.QueryFilter", {
                               property: "Parent",
                               operator: "=",
                               value: parentRef
                             });
                           } else {
-                            query = null;
+                            query = Ext.create("Rally.data.QueryFilter", {
+                              property: "ObjectID",
+                              operator: "!=",
+                              value: "0"
+                            });
                           }
                         } else if (modelType === "hierarchicalrequirement") {
                           //console.log("Create Query for Stories");
@@ -434,14 +474,15 @@ if (typeof window.console === "undefined") window.console = { log: function () {
             
                     Ext.data.NodeInterface.decorate(treeModel);
             
-                    var i = 0, fields = treeModel.getFields(), ii = fields.length, ssClone;
+                    var i, ii, fields = treeModel.getFields(), ssClone;
             
-                    for (; i < ii; i++) {
+                    var canExpandConvert = function canExpandConvert(v, rec) {
+                      return !rec.self.canExpandFn(rec);
+                    };
+            
+                    for (i = 0, ii = fields.length; i < ii; i++) {
                       if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
-                        fields[i].convert = function (v, rec) {
-                          return !rec.self.canExpandFn(rec);
-                          //return false;
-                        };
+                        fields[i].convert = canExpandConvert;
                       }
             
                       if ({ScheduleState: 1, State: 1}.hasOwnProperty(fields[i].name)) {
@@ -455,6 +496,12 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                         ssClone.convert = function (v, rec) {
                           if (rec.raw._type.toLowerCase() === "task") {
                             return rec.get("State");
+                          } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
+                            if (rec.get("State")) {
+                              return rec.get("State")._refObjectName;
+                            }
+            
+                            return "";
                           } else if (rec.raw.hasOwnProperty("ScheduleState")) {
                             return rec.get("ScheduleState");
                           } else {
@@ -472,7 +519,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                 }
               });
             
-            })(this);
+            }(this));
             (function (global) {
               var totalProcessed = 0;
             
@@ -580,7 +627,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                 },
             
                 nextPage: function nextPage(options) {
-                  this.loadPage(this.currentPage + 1), options;
+                  this.loadPage(this.currentPage + 1, options);
                 },
             
                 previousPage: function previousPage(options) {
@@ -642,7 +689,9 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                   messageable: "Rally.Messageable"
                 },
             
-                plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
+                plugins: [
+                  { ptype: "rallyrefreshviewoncolumnchangeplugin" }
+                ],
             
                 config: {
                   width: "100%",
@@ -652,13 +701,19 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                   componentCls: "rallytree rally-grid",
             
                   rootVisible: false,
+
+                  stateful: true,
+
+                  stateId: 'ruitreegridpanel.' + appID,
             
                   lines: false,
             
                   viewConfig: {
-                		toggleOnDblClick: false,
-                		plugins: { ptype: 'treeviewdragdrop' }
-                	}
+                    toggleOnDblClick: false,
+                    plugins: [
+                      { ptype: 'treeviewdragdrop' }
+                    ]
+                  }
             
                 },
             
@@ -682,18 +737,20 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                         .shouldAutoAddAllModelFieldsAsColumns(true)
                         .build(config.models[i].superclass);
             
-                      console.log("Auto Columns", autoGenColumns);
+                      //console.log("Auto Columns", autoGenColumns);
                       config.columns = config.columns.concat(autoGenColumns);
                     }
                   }
             
+                  //this.plugins.push({ ptype: "rallycellediting", messageBus: this._getMessageBus() });
+            
                   delete config.models;
                   delete config.columCfgs;
             
-                  console.log("Column Config", config.columns);
+                  //console.log("Column Config", config.columns);
                   me.callParent(arguments);
             
-                  console.log("Version", Ext.getVersion().version);
+                  //console.log("Version", Ext.getVersion().version);
             
                   me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
                   me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
@@ -701,7 +758,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
             
             
                 _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
-                  console.log("Can Drag Drop", arguments);
+                  //console.log("Can Drag Drop", arguments);
             
                   var rec = dragData.records[0],
                       targetType,
@@ -748,7 +805,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                 },
             
                 _onBeforeDrop: function _onBeforeDrop(elt, data, overModel, dropPosition, dropFunciton, eOpts) {
-                  console.log("On Before Drop", arguments);
+                  //console.log("On Before Drop", arguments);
                   var success = false;
             
                   if (dropPosition === "append") {
@@ -785,7 +842,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                       success = success && this._doReparentTA(overModel, recs[i]);
                     } else {
                       success = false; // I don't know what you are
-                      console.log("Don't know how to reparent this model", recs[i]);
+                      //console.log("Don't know how to reparent this model", recs[i]);
                     }
                   }
             
@@ -863,7 +920,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                     childModel.save();
                     return true;
                   } else if (parentType === "defectsuite") {
-                    childMode.set("DefectSuite", parentModel.raw._ref);
+                    childModel.set("DefectSuite", parentModel.raw._ref);
                     childModel.save();
                     return true;
                   }
@@ -872,7 +929,7 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                 },
             
                 _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
-                  console.log("ReRank", arguments);
+                  //console.log("ReRank", arguments);
             
                   var rankType = dropPosition === "after" ? "rankBelow" : "rankAbove",
                       params = {};
@@ -906,17 +963,13 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                      * @cfg {String} percentDoneName sometimes it's necessary to name the variable used as the percent done replacement in the template,
                      * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
                      */
+                    percentDoneName: "PercentDoneByStoryPlanEstimate",
+            
                     /**
                      * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.
                      * Defaults to:
                      *      function(){ return false; }
                      */
-                    showDangerNotificationFn: function() {
-                      return false;
-                    },
-            
-                    percentDoneName: "PercentDoneByStoryPlanEstimate",
-            
                     showDangerNotificationFn: function (recordData) {
                       return (!recordData.PlannedEndDate && !recordData.ActualEndDate) || recordData.UnEstimatedLeafStoryCount > 0;
                     },
@@ -982,50 +1035,270 @@ if (typeof window.console === "undefined") window.console = { log: function () {
                 }
               });
             
+              var defaultFilterFn = function () { return true; };
+            
+              var renderTask = function renderTask(p, val, __, rec) {
+                if (rec && rec.get) {
+                  if (rec.raw._type.toLowerCase() !== "task") {
+                    if (rec.raw.hasOwnProperty(p)) {
+                      return rec.raw[p];
+                    }
+                  }
+                }
+            
+                return val;
+              };
+            
               Ext.define('CustomApp', {
                 extend: 'Rally.app.App',
                 componentCls: 'app',
             
-                launch: function() {
-                  var store = Ext.create('Rally.data.WsapiTreeStore', {
-                    topLevelModels: ['portfolioitem/release' ],
-                    childModels: ['portfolioitem/initiative',
-                      'portfolioitem/capability', 'portfolioitem/feature', 'hierarchicalrequirement', 'task']
-                  });
+                childTypes: {
+                  defect: false,
+                  task: false,
+                  testcase: false
+                },
+ /* 
+                mixins: {
+                  maskable: "Rally.ui.mask.Maskable"
+                },
+ */
+                loading: null,
             
-                  this.add(Ext.create('Rally.ui.tree.grid.Panel', {
-                    store: store,
+                filterFn: defaultFilterFn,
+            
+                launch: function() {
+                  var me = this;
+            
+                  //me.maskTarget = me.el;
+            
+                  me.showLoading();
+            
+                  me.add(Ext.create("Ext.Panel", {
+                    border: false,
+                    layout: 'anchor',
+                    margin: '15 0 0 0',
+                    padding: '0 0 0 0',
+                    height: 45,
+                    width: '100%',
+                    items: [
+                      {
+                        width: '100%',
+                        anchor: '100% 45',
+                        border: false,
+                        layout: 'hbox',
+                        items: [
+                          {
+                            xtype: 'tbspacer',
+                            flex: 1
+                          },
+                          me._createTypeSelector(), {
+                            xtype: 'tbspacer',
+                            width: 10
+                          }
+                        ]
+                        }]
+                  }));
+                },
+            
+                showLoading: function() {
+                  var me = this;
+            
+                  //me.showMask("Loading...");
+                },
+            
+                hideLoading: function() {
+                  var me = this;
+            
+                  //me.hideMask();
+                },
+            
+                _createTypeSelector: function _createViewSelector() {
+                  var cb = Ext.create("Rally.ui.combobox.PortfolioItemTypeComboBox", {});
+            
+                  cb.on("ready", function(value) { 
+                    //console.log("Loaded", arguments); 
+                    cb.on("change", this._applyFilter, this);
+                    this._applyFilter(cb, value);
+                  }, this);
+            
+                  return cb;
+                },
+            
+                _createTypeToStateFieldMap: function _createTypeToStateFieldMap(model) {
+                  //console.dir(model);
+            
+                  var type = model.superclass.self.typePath.toLowerCase();
+                  var stateToFind = null;
+                  var ssf = null,
+                      i, ii,
+                      f;
+            
+                  if (type.indexOf("portfolioitem/") >= 0) {
+                    stateToFind = "State";
+                  } else if ((type === "hierarchicalrequirement") || (type === "defect")) {
+                    stateToFind = "ScheduleState";
+                  } else if (type === "task") {
+                    stateToFind = "State";
+                  }
+            
+                  if (stateToFind === null) {
+                    return null;
+                  }
+            
+                  f = model.getFields();
+                  for (i = 0, ii = f.length; i < ii; i++) {
+                    if (f[i].name === stateToFind) {
+                      ssf = f[i];
+                      break;
+                    }
+                  }
+            
+                  return ssf;
+                },
+            
+                _applyFilter: function _applyFilter(sender, newVal, oldVal, eOpts) {
+                  var i, ii;
+                  var me = this;
+            
+                  this._types = [];
+                  this._childTypes = [];
+                  
+                  for (i = 0, ii = sender.store.data.items.length; i < ii; i++) {
+                    this._types.push(sender.store.data.items[i].data.TypePath.toLowerCase());
+                    this._childTypes.push(sender.store.data.items[i].data.TypePath.toLowerCase());
+                  }
+            
+                  this._types.push("hierarchicalrequirement");
+                  this._types.push("task");
+                  this._types.push("defect");
+            
+                  this._childTypes.push("hierarchicalrequirement");
+                  this._childTypes.push("task");
+                  this._childTypes.push("defect");
+            
+                  this._childTypes.splice(0, sender.store.data.items.length - sender.valueModels[0].data.Ordinal);
+            
+                  newVal = sender.valueModels[0].data;
+            
+                  me.showLoading();
+            
+                  if (this._treePanel) {
+                    this.remove(this._treePanel);
+                  }
+            
+                  Rally.data.TreeModelFactory.getModels({
+                    types: me._types,
+                    success: function modelSuccess(models) {
+                      var m;
+            
+                      me._stateFields = {};
+                      me.model = models[newVal.TypePath.toLowerCase()];
+            
+                      for (m in models) {
+                        if (models.hasOwnProperty(m)) {
+                          me._stateFields[m] = me._createTypeToStateFieldMap(models[m]);
+                        }
+                      }
+            
+                      //console.dir(me._stateFields);
+            
+                      var doLoad = function(childModels) {
+                        //console.log("Child models", childModels);
+                        me.store = Ext.create('Rally.data.WsapiTreeStore', {
+                          topLevelModels: [ newVal.TypePath.toLowerCase() ],
+                          childModels: childModels
+                        });
+            
+                        me._onLoadData(newVal);
+                      };
+            
+                      doLoad(me._childTypes);
+                    }
+                  });
+                },
+            
+                _onLoadData: function _onLoadData(newVal) {
+                  var me = this;
+            
+                  //console.log("Loading data", newVal);
+            
+                  me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
+                    store: me.store,
+                    models: [me.model],
                     dockedItems: [{
                       xtype: 'rallypagingtoolbar',
-                      store: store,   // same store TreeGridPanel is using
+                      store: me.store,   // same store TreeGridPanel is using
                       dock: 'bottom',
-                      displayInfo: true
+                      displayInfo: true,
+                      listeners: {
+                        beforechange: function () {
+                          this.showLoading();
+                        },
+                        scope: me
+                      }
                     }],
-                    columns: [{
-                      xtype: 'treecolumn',
-                      text: 'Name',
-                      dataIndex: 'Name',
-                      flex: 2
-                    }, {
-                      xtype: 'templatecolumn',
-                      tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
-                      text: '% Done by Plan Est',
-                      dataIndex: 'PercentDoneByPlanEstimate',
-                      flex: 1
-                    }, {
-                      text: 'Schedule State',
-                      dataIndex: 'ScheduleState',
-                      flex: 1
-                    }, {
-                      text: 'Est. Hours',
-                      dataIndex: 'Estimate',
-                      flex: 1
-                    }, {
-                      text: 'Remaining',
-                      dataIndex: 'ToDo',
-                      flex: 1
-                    }]
-                  }));
+                    listeners: {
+                      load: function() { me.hideLoading(); }
+                    },
+                    columnCfgs: [
+                      "Name",
+                      "Release",
+                      "Iteration",
+                      "ScheduleState",
+                      "PlanEstimate",
+                      {
+                        text: 'Task Est.',
+                        dataIndex: 'Estimate',
+                        renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
+                        flex: 1,
+                        hidden: true
+                      },
+                      {
+                        text: 'To Do',
+                        dataIndex: 'ToDo',
+                        renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
+                        flex: 1,
+                        hidden: true
+                      }, {
+                        xtype: 'templatecolumn',
+                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+                        text: '% Done By Plan Estimate',
+                        dataIndex: 'PercentDoneByPlanEstimate',
+                        flex: 1
+                      }, {
+                        xtype: 'templatecolumn',
+                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+                        text: '% Done By Story Count',
+                        dataIndex: 'PercentDoneByStoryCount',
+                        flex: 1
+                      }, 
+                      "PrelimenaryEstimate",
+                      "PlannedStartDate",
+                      "PlannedEndDate",
+                      "ValueScore",
+                      "RiskScore",
+                      {
+                        text: 'State',
+                        renderer: function (value, metaData, record) {
+                          //console.log("Renderer", arguments);
+                          var type = record.data._type.toLowerCase();
+                          var res = "";
+                         
+                          res = me._stateFields[type].renderTpl.apply(record.data);
+            
+                          //console.log(res);
+            
+                          return res;
+                        },
+                        flex: 1
+                      }
+                    ]
+            
+                  });
+            
+                  me._treePanel.on("load", function() { me.hideLoading(); });
+                  me.add(me._treePanel);
                 }
               });
             }(this));
