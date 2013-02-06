@@ -247,6 +247,22 @@
           return !rec.self.canExpandFn(rec);
         };
 
+        var convertFn = function (v, rec) {
+            if (rec.raw._type.toLowerCase() === "task") {
+              return rec.get("State");
+            } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
+              if (rec.get("State")) {
+                return rec.get("State")._refObjectName;
+              }
+
+              return "";
+            } else if (rec.raw.hasOwnProperty("ScheduleState")) {
+              return rec.get("ScheduleState");
+            } else {
+              return "";
+            }
+        };
+
         for (i = 0, ii = fields.length; i < ii; i++) {
           if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
             fields[i].convert = canExpandConvert;
@@ -260,21 +276,7 @@
             ssClone.renderTpl = fields[i].renderTpl;
 
             ssClone.name = "UnifiedState";
-            ssClone.convert = function (v, rec) {
-              if (rec.raw._type.toLowerCase() === "task") {
-                return rec.get("State");
-              } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
-                if (rec.get("State")) {
-                  return rec.get("State")._refObjectName;
-                }
-
-                return "";
-              } else if (rec.raw.hasOwnProperty("ScheduleState")) {
-                return rec.get("ScheduleState");
-              } else {
-                return "";
-              }
-            };
+            ssClone.convert = convertFn;
           }
         }
 

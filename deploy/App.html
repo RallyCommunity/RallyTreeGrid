@@ -51,87 +51,96 @@
             
                   //console.log("Reading Root");
             
+                  var iHateJsScoping = function iHateJsScoping(type) {
+                    var sorter = [{
+                      property: "Rank",
+                      direction: "ASC"
+                    }];
+            
+                    Rally.data.TreeModelFactory.getModel({
+                      type: type,
+                      canExpandFn: me.canExpandFn,
+                      success: function onSuccess(model) {
+                        var query = model.buildParentQueryFn(model, null);
+            
+                        if (me.wsapiStoreOptions.query) {
+                          query = query.and(me.wsapiStoreOptions.query);
+                        }
+            
+                        var wsapi = Ext.create("Rally.data.WsapiDataStore", {
+                          autoLoad: false,
+                          model: model,
+                          pageSize: me.wsapiStoreOptions.limit,
+                          startPage: me.wsapiStoreOptions.page,
+                          page: me.wsapiStoreOptions.page,
+                          start: me.wsapiStoreOptions.start,
+                          limit: me.wsapiStoreOptions.limit,
+                          isPaging: me.wsapiStoreOptions.isPaging,
+                          filters: query,
+                          sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
+                          listeners: {
+                            load: function loaded(store, data, success) {
+                              processCB(store, data, type);
+                            }
+                          }
+                        });
+            
+                        wsapi.loadPage(me.wsapiStoreOptions.page);
+                      }
+                    });
+                  };
+            
                   for (; i < ii; i++) {
                     loadedArtifacts[me.topLevelModels[i].toLowerCase()] = 0;
             
-                    (function iHateJsScoping(type) {
-                      var sorter = [{
-                        property: "Rank",
-                        direction: "ASC"
-                      }];
-            
-                      Rally.data.TreeModelFactory.getModel({
-                        type: type,
-                        canExpandFn: me.canExpandFn,
-                        success: function onSuccess(model) {
-                          var query = model.buildParentQueryFn(model, null);
-            
-                          if (me.wsapiStoreOptions.query) {
-                            query = query.and(me.wsapiStoreOptions.query);
-                          }
-            
-                          var wsapi = Ext.create("Rally.data.WsapiDataStore", {
-                            autoLoad: false,
-                            model: model,
-                            pageSize: me.wsapiStoreOptions.limit,
-                            startPage: me.wsapiStoreOptions.page,
-                            page: me.wsapiStoreOptions.page,
-                            start: me.wsapiStoreOptions.start,
-                            limit: me.wsapiStoreOptions.limit,
-                            isPaging: me.wsapiStoreOptions.isPaging,
-                            filters: query,
-                            sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
-                            listeners: {
-                              load: function loaded(store, data, success) {
-                                processCB(store, data, type);
-                              }
-                            }
-                          });
-            
-                          wsapi.loadPage(me.wsapiStoreOptions.page);
-                        }
-                      });
-                    }(me.topLevelModels[i].toLowerCase()));
+                    iHateJsScoping(me.topLevelModels[i].toLowerCase());
                   }
                 },
             
                 _readChildren: function _readChildren(operation, callback, scope) {
                   var loadedArtifacts = {},
                       me = this,
-                      processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+                      processCB = Ext.bind(this._processResults, {
+                        filterFn: me.filterFn, 
+                        loadedArtifacts: loadedArtifacts, 
+                        operation: operation, 
+                        callback: callback, 
+                        scope: scope}),
                       i= 0, ii = me.childModels.length;
             
                   //console.log("Reading Children");
+            
+                  var iHateJsScoping = function iHateJsScoping(type) {
+                    var sorter = [{
+                      property: "Rank",
+                      direction: "ASC"
+                    }];
+            
+                    Rally.data.TreeModelFactory.getModel({
+                      canExpandFn: me.canExpandFn,
+                      type: type,
+                      success: function onSuccess(model) {
+                        Ext.create("Rally.data.WsapiDataStore", {
+                          autoLoad: true,
+                          filters: model.buildParentQueryFn(model, operation.node),
+                          sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
+                          model: model,
+                          listeners: {
+                            load: function loaded(store, data, success) {
+                              //console.log("Loaded Children", type, store, data, success);
+                              processCB(store, data, type);
+                            }
+                          }
+                        });
+                      }
+                    });
+                  };
             
                   for (; i < ii; i++) {
                     //console.log("Fetching children of type", me.childModels[i], i, ii);
                     loadedArtifacts[me.childModels[i].toLowerCase()] = 0;
             
-                    (function iHateJsScoping(type) {
-                      var sorter = [{
-                        property: "Rank",
-                        direction: "ASC"
-                      }];
-            
-                      Rally.data.TreeModelFactory.getModel({
-                        canExpandFn: me.canExpandFn,
-                        type: type,
-                        success: function onSuccess(model) {
-                          Ext.create("Rally.data.WsapiDataStore", {
-                            autoLoad: true,
-                            filters: model.buildParentQueryFn(model, operation.node),
-                            sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
-                            model: model,
-                            listeners: {
-                              load: function loaded(store, data, success) {
-                                //console.log("Loaded Children", type, store, data, success);
-                                processCB(store, data, type);
-                              }
-                            }
-                          });
-                        }
-                      });
-                    }(me.childModels[i].toLowerCase()));
+                    iHateJsScoping(me.childModels[i].toLowerCase());
                   }
             
                 },
@@ -478,6 +487,22 @@
                       return !rec.self.canExpandFn(rec);
                     };
             
+                    var convertFn = function (v, rec) {
+                        if (rec.raw._type.toLowerCase() === "task") {
+                          return rec.get("State");
+                        } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
+                          if (rec.get("State")) {
+                            return rec.get("State")._refObjectName;
+                          }
+            
+                          return "";
+                        } else if (rec.raw.hasOwnProperty("ScheduleState")) {
+                          return rec.get("ScheduleState");
+                        } else {
+                          return "";
+                        }
+                    };
+            
                     for (i = 0, ii = fields.length; i < ii; i++) {
                       if ({leaf: 1}.hasOwnProperty(fields[i].name)) {
                         fields[i].convert = canExpandConvert;
@@ -491,21 +516,7 @@
                         ssClone.renderTpl = fields[i].renderTpl;
             
                         ssClone.name = "UnifiedState";
-                        ssClone.convert = function (v, rec) {
-                          if (rec.raw._type.toLowerCase() === "task") {
-                            return rec.get("State");
-                          } else if (rec.raw._type.toLowerCase().indexOf("portfolio") >= 0) {
-                            if (rec.get("State")) {
-                              return rec.get("State")._refObjectName;
-                            }
-            
-                            return "";
-                          } else if (rec.raw.hasOwnProperty("ScheduleState")) {
-                            return rec.get("ScheduleState");
-                          } else {
-                            return "";
-                          }
-                        };
+                        ssClone.convert = convertFn;
                       }
                     }
             
@@ -1246,6 +1257,12 @@
                       load: function() { me.hideLoading(); }
                     },
                     columnCfgs: [
+                      //{
+                        //xtype: 'rallyrowactioncolumn',
+                        //rowActions: [
+                            //Rally.ui.menu.item.Edit.get()
+                        //]
+                      //},
                       "Name",
                       "Release",
                       "Iteration",
@@ -1255,27 +1272,27 @@
                         text: 'Task Est.',
                         dataIndex: 'Estimate',
                         renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
-                        flex: 1,
+                        //flex: 1,
                         hidden: true
                       },
                       {
                         text: 'To Do',
                         dataIndex: 'ToDo',
                         renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
-                        flex: 1,
+                        //flex: 1,
                         hidden: true
                       }, {
                         xtype: 'templatecolumn',
                         tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
                         text: '% Done By Plan Estimate',
-                        dataIndex: 'PercentDoneByPlanEstimate',
-                        flex: 1
+                        dataIndex: 'PercentDoneByPlanEstimate'
+                        //flex: 1
                       }, {
                         xtype: 'templatecolumn',
                         tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
                         text: '% Done By Story Count',
-                        dataIndex: 'PercentDoneByStoryCount',
-                        flex: 1
+                        dataIndex: 'PercentDoneByStoryCount'
+                        //flex: 1
                       }, 
                       "PrelimenaryEstimate",
                       "PlannedStartDate",
@@ -1294,8 +1311,8 @@
                           //console.log(res);
             
                           return res;
-                        },
-                        flex: 1
+                        }
+                        //flex: 1
                       }
                     ]
             

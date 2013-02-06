@@ -213,6 +213,12 @@
           load: function() { me.hideLoading(); }
         },
         columnCfgs: [
+          //{
+            //xtype: 'rallyrowactioncolumn',
+            //rowActions: [
+                //Rally.ui.menu.item.Edit.get()
+            //]
+          //},
           "Name",
           "Release",
           "Iteration",
@@ -222,27 +228,27 @@
             text: 'Task Est.',
             dataIndex: 'Estimate',
             renderer: Ext.bind(renderTask, me, ["TaskEstimateTotal"], 0),
-            flex: 1,
+            //flex: 1,
             hidden: true
           },
           {
             text: 'To Do',
             dataIndex: 'ToDo',
             renderer: Ext.bind(renderTask, me, ["TaskRemainingTotal"], 0),
-            flex: 1,
+            //flex: 1,
             hidden: true
           }, {
             xtype: 'templatecolumn',
             tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
             text: '% Done By Plan Estimate',
-            dataIndex: 'PercentDoneByPlanEstimate',
-            flex: 1
+            dataIndex: 'PercentDoneByPlanEstimate'
+            //flex: 1
           }, {
             xtype: 'templatecolumn',
             tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
             text: '% Done By Story Count',
-            dataIndex: 'PercentDoneByStoryCount',
-            flex: 1
+            dataIndex: 'PercentDoneByStoryCount'
+            //flex: 1
           }, 
           "PrelimenaryEstimate",
           "PlannedStartDate",
@@ -261,8 +267,8 @@
               //console.log(res);
 
               return res;
-            },
-            flex: 1
+            }
+            //flex: 1
           }
         ]
 
