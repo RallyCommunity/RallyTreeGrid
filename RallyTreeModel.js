@@ -28,4 +28,4 @@
   });
 
   Ext.data.NodeInterface.decorate(trm);
-})(this);
+}(this));

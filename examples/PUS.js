@@ -376,7 +376,7 @@
                     inscope[results[i]._ItemHierarchy[j]] = 1;
                   }
                   items[results[i].ObjectID] = 1;
-                  //topLevel[results[i]._ItemHierarchy[0]] = 1;
+                  topLevel[results[i]._ItemHierarchy[0]] = 1;
                 }
               }
 
@@ -393,7 +393,7 @@
                 }
               }
 
-              me.filterFn = Ext.bind(lbapiFilterFn, {inscope: inscope, items: items});
+              me.filterFn = Ext.bind(lbapiFilterFn, {inscope: inscope, items: items, topLevel: topLevel});
 
               doLoad(query, childModels);
             });

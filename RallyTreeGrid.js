@@ -1,4 +1,10 @@
 (function (global) {
+  var appID = window.location.hash.split("/")[4];
+  
+  if (!appID) {
+    appID = "0000000";
+  }
+
   Ext.tree.ViewDropZone.prototype.getPosition = function(e, node) {
       var view = this.view,
           record = view.getRecord(node),
@@ -47,7 +53,9 @@
       messageable: "Rally.Messageable"
     },
 
-    plugins: [{ptype: "rallyrefreshviewoncolumnchangeplugin"}],
+    plugins: [
+      { ptype: "rallyrefreshviewoncolumnchangeplugin" }
+    ],
 
     config: {
       width: "100%",
@@ -58,12 +66,18 @@
 
       rootVisible: false,
 
+      stateful: true,
+
+      stateId: "ruitreegridpanel." + appID,
+
       lines: false,
 
       viewConfig: {
-    		toggleOnDblClick: false,
-    		plugins: { ptype: 'treeviewdragdrop' }
-    	}
+        toggleOnDblClick: false,
+        plugins: [
+          { ptype: 'treeviewdragdrop' }
+        ]
+      }
 
     },
 
@@ -87,18 +101,20 @@
             .shouldAutoAddAllModelFieldsAsColumns(true)
             .build(config.models[i].superclass);
 
-          console.log("Auto Columns", autoGenColumns);
+          //console.log("Auto Columns", autoGenColumns);
           config.columns = config.columns.concat(autoGenColumns);
         }
       }
 
+      //this.plugins.push({ ptype: "rallycellediting", messageBus: this._getMessageBus() });
+
       delete config.models;
       delete config.columCfgs;
 
-      console.log("Column Config", config.columns);
+      //console.log("Column Config", config.columns);
       me.callParent(arguments);
 
-      console.log("Version", Ext.getVersion().version);
+      //console.log("Version", Ext.getVersion().version);
 
       me.getView().on("nodedragover", Ext.bind(me._canDragDrop, me)); // Waiting on 4.1.2
       me.getView().on("beforedrop", Ext.bind(me._onBeforeDrop, me));
@@ -106,7 +122,7 @@
 
 
     _canDragDrop: function _canDragDrop(targetNode, position, dragData) {
-      console.log("Can Drag Drop", arguments);
+      //console.log("Can Drag Drop", arguments);
 
       var rec = dragData.records[0],
           targetType,
@@ -153,7 +169,7 @@
     },
 
     _onBeforeDrop: function _onBeforeDrop(elt, data, overModel, dropPosition, dropFunciton, eOpts) {
-      console.log("On Before Drop", arguments);
+      //console.log("On Before Drop", arguments);
       var success = false;
 
       if (dropPosition === "append") {
@@ -190,7 +206,7 @@
           success = success && this._doReparentTA(overModel, recs[i]);
         } else {
           success = false; // I don't know what you are
-          console.log("Don't know how to reparent this model", recs[i]);
+          //console.log("Don't know how to reparent this model", recs[i]);
         }
       }
 
@@ -268,7 +284,7 @@
         childModel.save();
         return true;
       } else if (parentType === "defectsuite") {
-        childMode.set("DefectSuite", parentModel.raw._ref);
+        childModel.set("DefectSuite", parentModel.raw._ref);
         childModel.save();
         return true;
       }
@@ -277,7 +293,7 @@
     },
 
     _rerankNodes: function _rerankNode(elt, data, overModel, dropPosition, dropFunction, eOpts) {
-      console.log("ReRank", arguments);
+      //console.log("ReRank", arguments);
 
       var rankType = dropPosition === "after" ? "rankBelow" : "rankAbove",
           params = {};

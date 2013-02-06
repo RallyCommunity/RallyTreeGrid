@@ -42,87 +42,96 @@
 
       //console.log("Reading Root");
 
+      var iHateJsScoping = function iHateJsScoping(type) {
+        var sorter = [{
+          property: "Rank",
+          direction: "ASC"
+        }];
+
+        Rally.data.TreeModelFactory.getModel({
+          type: type,
+          canExpandFn: me.canExpandFn,
+          success: function onSuccess(model) {
+            var query = model.buildParentQueryFn(model, null);
+
+            if (me.wsapiStoreOptions.query) {
+              query = query.and(me.wsapiStoreOptions.query);
+            }
+
+            var wsapi = Ext.create("Rally.data.WsapiDataStore", {
+              autoLoad: false,
+              model: model,
+              pageSize: me.wsapiStoreOptions.limit,
+              startPage: me.wsapiStoreOptions.page,
+              page: me.wsapiStoreOptions.page,
+              start: me.wsapiStoreOptions.start,
+              limit: me.wsapiStoreOptions.limit,
+              isPaging: me.wsapiStoreOptions.isPaging,
+              filters: query,
+              sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
+              listeners: {
+                load: function loaded(store, data, success) {
+                  processCB(store, data, type);
+                }
+              }
+            });
+
+            wsapi.loadPage(me.wsapiStoreOptions.page);
+          }
+        });
+      };
+
       for (; i < ii; i++) {
         loadedArtifacts[me.topLevelModels[i].toLowerCase()] = 0;
 
-        (function iHateJsScoping(type) {
-          var sorter = [{
-            property: "Rank",
-            direction: "ASC"
-          }];
-
-          Rally.data.TreeModelFactory.getModel({
-            type: type,
-            canExpandFn: me.canExpandFn,
-            success: function onSuccess(model) {
-              var query = model.buildParentQueryFn(model, null);
-
-              if (me.wsapiStoreOptions.query) {
-                query = query.and(me.wsapiStoreOptions.query);
-              }
-
-              var wsapi = Ext.create("Rally.data.WsapiDataStore", {
-                autoLoad: false,
-                model: model,
-                pageSize: me.wsapiStoreOptions.limit,
-                startPage: me.wsapiStoreOptions.page,
-                page: me.wsapiStoreOptions.page,
-                start: me.wsapiStoreOptions.start,
-                limit: me.wsapiStoreOptions.limit,
-                isPaging: me.wsapiStoreOptions.isPaging,
-                filters: query,
-                sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
-                listeners: {
-                  load: function loaded(store, data, success) {
-                    processCB(store, data, type);
-                  }
-                }
-              });
-
-              wsapi.loadPage(me.wsapiStoreOptions.page);
-            }
-          });
-        }(me.topLevelModels[i].toLowerCase()));
+        iHateJsScoping(me.topLevelModels[i].toLowerCase());
       }
     },
 
     _readChildren: function _readChildren(operation, callback, scope) {
       var loadedArtifacts = {},
           me = this,
-          processCB = Ext.bind(this._processResults, {filterFn: me.filterFn, loadedArtifacts: loadedArtifacts, operation: operation, callback: callback, scope: scope}),
+          processCB = Ext.bind(this._processResults, {
+            filterFn: me.filterFn, 
+            loadedArtifacts: loadedArtifacts, 
+            operation: operation, 
+            callback: callback, 
+            scope: scope}),
           i= 0, ii = me.childModels.length;
 
       //console.log("Reading Children");
+
+      var iHateJsScoping = function iHateJsScoping(type) {
+        var sorter = [{
+          property: "Rank",
+          direction: "ASC"
+        }];
+
+        Rally.data.TreeModelFactory.getModel({
+          canExpandFn: me.canExpandFn,
+          type: type,
+          success: function onSuccess(model) {
+            Ext.create("Rally.data.WsapiDataStore", {
+              autoLoad: true,
+              filters: model.buildParentQueryFn(model, operation.node),
+              sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
+              model: model,
+              listeners: {
+                load: function loaded(store, data, success) {
+                  //console.log("Loaded Children", type, store, data, success);
+                  processCB(store, data, type);
+                }
+              }
+            });
+          }
+        });
+      };
 
       for (; i < ii; i++) {
         //console.log("Fetching children of type", me.childModels[i], i, ii);
         loadedArtifacts[me.childModels[i].toLowerCase()] = 0;
 
-        (function iHateJsScoping(type) {
-          var sorter = [{
-            property: "Rank",
-            direction: "ASC"
-          }];
-
-          Rally.data.TreeModelFactory.getModel({
-            canExpandFn: me.canExpandFn,
-            type: type,
-            success: function onSuccess(model) {
-              Ext.create("Rally.data.WsapiDataStore", {
-                autoLoad: true,
-                filters: model.buildParentQueryFn(model, operation.node),
-                sorters: model.superclass.self.typeName.toLowerCase() !== "testcase" ? sorter : null,
-                model: model,
-                listeners: {
-                  load: function loaded(store, data, success) {
-                    //console.log("Loaded Children", type, store, data, success);
-                    processCB(store, data, type);
-                  }
-                }
-              });
-            }
-          });
-        }(me.childModels[i].toLowerCase()));
+        iHateJsScoping(me.childModels[i].toLowerCase());
       }
 
     },
@@ -151,6 +160,9 @@
 
           data[i].data.cls = data[i].raw._type.split("/").join("").toLowerCase();
           data[i].data.href = Rally.util.Navigation.createRallyDetailUrl(data[i].data);
+          if (data[i].data.href.indexOf("#") !== 1) {
+            data[i].data.href = "/#" + data[i].data.href;
+          }
           data[i].data.hrefTarget = "_top";
 
           if (this.filterFn(data[i])) {
@@ -185,4 +197,4 @@
       //return {buildExtractors: function() {}};
     //}
   });
-})(this);
+}(this));
