@@ -16,17 +16,13 @@
          * @cfg {String} percentDoneName sometimes it's necessary to name the variable used as the percent done replacement in the template,
          * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
          */
+        percentDoneName: "PercentDoneByStoryPlanEstimate",
+
         /**
          * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.
          * Defaults to:
          *      function(){ return false; }
          */
-        showDangerNotificationFn: function() {
-          return false;
-        },
-
-        percentDoneName: "PercentDoneByStoryPlanEstimate",
-
         showDangerNotificationFn: function (recordData) {
           return (!recordData.PlannedEndDate && !recordData.ActualEndDate) || recordData.UnEstimatedLeafStoryCount > 0;
         },

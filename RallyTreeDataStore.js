@@ -105,7 +105,7 @@
     },
 
     nextPage: function nextPage(options) {
-      this.loadPage(this.currentPage + 1), options;
+      this.loadPage(this.currentPage + 1, options);
     },
 
     previousPage: function previousPage(options) {
