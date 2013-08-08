@@ -3,7 +3,7 @@
 <head>
     <title>TreeGrid</title>
 
-    <script type="text/javascript" src="/apps/2.0p5/sdk-debug.js?wsapiVersion=1.39"></script>
+    <script type="text/javascript" src="/apps/2.0p5/sdk-debug.js"></script>
 
     <script type="text/javascript">
         Rally.onReady(function() {
@@ -717,10 +717,6 @@
             
                   rootVisible: false,
             
-                  stateful: true,
-            
-                  stateId: "ruitreegridpanel." + appID,
-            
                   lines: false,
             
                   viewConfig: {
@@ -1237,10 +1233,13 @@
                   var me = this;
             
                   //console.log("Loading data", newVal);
+                  var appId = me.getAppId();
             
                   me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
                     store: me.store,
                     models: [me.model],
+                    stateful: true,
+                    stateId: 'portfoliodrilldown-treegrid-' + appId,
                     dockedItems: [{
                       xtype: 'rallypagingtoolbar',
                       store: me.store,   // same store TreeGridPanel is using

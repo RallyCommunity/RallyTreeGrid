@@ -66,10 +66,6 @@
 
       rootVisible: false,
 
-      stateful: true,
-
-      stateId: "ruitreegridpanel." + appID,
-
       lines: false,
 
       viewConfig: {

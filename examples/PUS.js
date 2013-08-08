@@ -72,7 +72,7 @@
             border: false,
             layout: 'hbox',
             items: [
-              me._createViewSelector(),
+              //me._createViewSelector(),
               {
                 xtype: 'tbspacer',
                 flex: 1
@@ -85,7 +85,7 @@
       }));
 
       //me.add(me._createTypeChoices());
-
+      me._applyFilter(me, {});
     },
 
     showLoading: function() {
@@ -128,83 +128,83 @@
         }
       });
 
-      data.push({
-        name: "Has Test Cases (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
-              TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "SOME_RUN_ALL_PASSING", "ALL_RUN_NONE_PASSING", "ALL_RUN_ALL_PASSING"] }
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "Has Test Cases (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              //TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "SOME_RUN_ALL_PASSING", "ALL_RUN_NONE_PASSING", "ALL_RUN_ALL_PASSING"] }
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          //}
+        //}
+      //});
 
-      data.push({
-        name: "No Test Cases (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
-              TestCaseStatus: "NONE"
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "No Test Cases (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              //TestCaseStatus: "NONE"
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          //}
+        //}
+      //});
 
-      data.push({
-        name: "All Test Cases Passing (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
-              TestCaseStatus: { $in: ["ALL_RUN_ALL_PASSING"] }
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "All Test Cases Passing (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              //TestCaseStatus: { $in: ["ALL_RUN_ALL_PASSING"] }
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          //}
+        //}
+      //});
 
-      data.push({
-        name: "Test Cases Not Passing (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement"] },
-              TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "ALL_RUN_NONE_PASSING"] }
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "Test Cases Not Passing (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement"] },
+              //TestCaseStatus: { $in: ["NONE_RUN", "SOME_RUN_SOME_NOT_PASSING", "ALL_RUN_NONE_PASSING"] }
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "TestCaseStatus", "Name"]
+          //}
+        //}
+      //});
 
-      data.push({
-        name: "Has Active Defects (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
-              DefectStatus: { $in: ["NONE_CLOSED", "SOME_CLOSED"] }
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "Has Active Defects (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
+              //DefectStatus: { $in: ["NONE_CLOSED", "SOME_CLOSED"] }
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
+          //}
+        //}
+      //});
 
-      data.push({
-        name: "No Active Defects (LB)", 
-        value: {
-          lbapi: {
-            find: {
-              _TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
-              DefectStatus: { $in: ["NONE"] }
-            },
-            fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
-          }
-        }
-      });
+      //data.push({
+        //name: "No Active Defects (LB)", 
+        //value: {
+          //lbapi: {
+            //find: {
+              //_TypeHierarchy: { $in: ["HierarchicalRequirement", "Defect"] },
+              //DefectStatus: { $in: ["NONE"] }
+            //},
+            //fields: ["ObjectID", "_ItemHierarchy", "DefectStatus", "Name"]
+          //}
+        //}
+      //});
 
       var store = Ext.create("Ext.data.Store", {
         model: "Views",
@@ -330,7 +330,7 @@
               childModels: childModels,
               query: query,
               filterFn: me.filterFn
-            })
+            });
 
             me._onLoadData(newVal);
           };

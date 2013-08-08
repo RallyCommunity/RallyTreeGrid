@@ -193,10 +193,13 @@
       var me = this;
 
       //console.log("Loading data", newVal);
+      var appId = me.getAppId();
 
       me._treePanel = Ext.create('Rally.ui.tree.grid.Panel', {
         store: me.store,
         models: [me.model],
+        stateful: true,
+        stateId: 'portfoliodrilldown-treegrid-' + appId,
         dockedItems: [{
           xtype: 'rallypagingtoolbar',
           store: me.store,   // same store TreeGridPanel is using

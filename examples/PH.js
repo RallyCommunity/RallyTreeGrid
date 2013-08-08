@@ -11,6 +11,8 @@
     componentCls: 'app',
 
     launch: function() {
+      var appId = this.getAppId();
+
       var store = Ext.create('Rally.data.WsapiTreeStore', {
         topLevelModels: ['portfolioitem/theme' ],
         childModels: ['portfolioitem/initiative', 'portfolioitem/feature', 'hierarchicalrequirement', 'task', 'defect', 'testcase']
@@ -18,6 +20,8 @@
 
       this.add(Ext.create('Rally.ui.tree.grid.Panel', {
         store: store,
+        stateful: true,
+        stateId: 'portfoliodrilldown-treegrid-' + appId,
         dockedItems: [{
           xtype: 'rallypagingtoolbar',
           store: store,   // same store TreeGridPanel is using
