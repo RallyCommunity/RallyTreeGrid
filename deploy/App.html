@@ -975,6 +975,7 @@
                      * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
                      */
                     percentDoneName: "PercentDoneByStoryPlanEstimate",
+                    
             
                     /**
                      * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.
@@ -1288,7 +1289,9 @@
                         //flex: 1
                       }, {
                         xtype: 'templatecolumn',
-                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+                        tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2', {
+                          percentDoneName: 'PercentDoneByStoryCount'
+                        }),
                         text: '% Done By Story Count',
                         dataIndex: 'PercentDoneByStoryCount'
                         //flex: 1

@@ -17,6 +17,7 @@
          * like in a grid when a record is used to render the template. The record's field name might be 'PercentDoneByStoryCount', not 'percentDone'
          */
         percentDoneName: "PercentDoneByStoryPlanEstimate",
+        
 
         /**
          * @cfg {Function} showDangerNotificationFn A function that should return true to show a triangle in the top right to denote something is missing.

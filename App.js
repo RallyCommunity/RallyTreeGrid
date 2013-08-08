@@ -248,7 +248,9 @@
             //flex: 1
           }, {
             xtype: 'templatecolumn',
-            tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2'),
+            tpl: Ext.create('Rally.ui.renderer.template.PercentDoneByStoryPlanEstimateTemplate2', {
+              percentDoneName: 'PercentDoneByStoryCount'
+            }),
             text: '% Done By Story Count',
             dataIndex: 'PercentDoneByStoryCount'
             //flex: 1
